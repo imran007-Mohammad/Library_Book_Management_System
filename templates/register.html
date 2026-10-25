@@ -1,0 +1,14 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create account | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><div class="auth"><div class="box">
+<a class="logo" href="index.html"><i></i>Central Library</a>
+<h1>Create account</h1><p>Members can borrow up to 3 books at a time.</p>
+{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}<form action="/register" method="POST">
+<label for="n">Full name</label><input id="n" name="name" required>
+<div class="row"><div><label for="sid">Student ID</label><input id="sid" name="student_id" required></div>
+<div><label for="dept">Department</label><select id="dept" name="dept"><option>CSE</option><option>AIML</option><option>ECE</option><option>Other</option></select></div></div>
+<label for="em">Email</label><input id="em" name="email" type="email" required>
+<label for="ph">Phone</label><input id="ph" name="phone" type="tel" pattern="[0-9]{10}" placeholder="10 digits">
+<label for="p1">Password</label><input id="p1" name="password" type="password" minlength="8" required autocomplete="new-password">
+<button class="btn" type="submit">Create account</button></form>
+<p class="note">Already a member? <a href="login.html">Log in</a></p>
+</div></div></body></html>

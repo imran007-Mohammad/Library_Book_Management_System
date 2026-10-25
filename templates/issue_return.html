@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Issue and Return | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
+<aside><a class="logo" href="index.html"><i></i>Central Library</a>
+<a class="nav" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav on" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
+<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
+<h1>Issue / Return</h1><p class="sub">Loan period is 14 days. Fine is ₹2 per day after the due date.</p>
+<div class="two">
+<div class="panel"><h2>Issue a book</h2><form action="/issue" method="POST">
+<label for="m1">Student ID</label><input id="m1" name="student_id" required>
+<label for="b1">Book ISBN</label><input id="b1" name="isbn" required>
+<label for="d1">Due date</label><input id="d1" name="due" type="date" required>
+<button class="btn" type="submit">Issue book</button></form></div>
+<div class="panel"><h2>Return a book</h2><form action="/return" method="POST">
+<label for="m2">Student ID</label><input id="m2" name="student_id" required>
+<label for="b2">Book ISBN</label><input id="b2" name="isbn" required>
+<label for="d2">Returned on</label><input id="d2" name="returned" type="date" required>
+<button class="btn red" type="submit">Return book</button></form></div></div>
+</main></div></body></html>

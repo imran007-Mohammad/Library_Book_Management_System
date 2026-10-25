@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Books | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
+<aside><a class="logo" href="index.html"><i></i>Central Library</a>
+<a class="nav" href="dashboard.html">Dashboard</a><a class="nav on" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
+<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
+<h1>Books</h1><p class="sub">Search and manage the catalogue.</p>
+<div class="panel"><form class="bar" method="get" action="/books">
+<input type="search" name="q" value="{{ q }}" placeholder="Search title, author or ISBN" aria-label="Search books">
+<select name="category" aria-label="Category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>{% endfor %}</select><button class="btn" type="submit" style="margin:0;width:auto">Search</button>
+{% if session.role == 'admin' %}<a class="btn" href="/add_book" style="margin:0;width:auto">Add book</a>{% endif %}</form>
+<table><tr><th>ISBN</th><th>Title</th><th>Author</th><th>Copies</th><th>Status</th><th></th></tr>
+{% for b in books %}<tr><td>{{ b.isbn }}</td><td>{{ b.title }}</td><td>{{ b.author }}</td><td>{{ b.copies_available }} / {{ b.total_copies }}</td><td>{% if b.copies_available > 0 %}<span class="tag">Available</span>{% else %}<span class="tag out">Borrowed</span>{% endif %}</td><td></td></tr>
+{% else %}<tr><td colspan="6">No books found.</td></tr>{% endfor %}</table></div>
+</main></div></body></html>

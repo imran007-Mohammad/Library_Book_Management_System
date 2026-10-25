@@ -1,0 +1,15 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
+<aside><a class="logo" href="index.html"><i></i>Central Library</a>
+<a class="nav on" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
+<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
+<h1>Dashboard</h1><p class="sub">Today at a glance.</p>
+<div class="stats">
+<div class="stat" style="--c:var(--teal)"><b>{{ stats.total_books }}</b><span>Total books</span></div>
+<div class="stat" style="--c:var(--gold)"><b>{{ stats.borrowed }}</b><span>Currently borrowed</span></div>
+<div class="stat" style="--c:var(--brick)"><b>{{ stats.overdue }}</b><span>Overdue</span></div>
+<div class="stat" style="--c:var(--ink)"><b>{{ stats.members }}</b><span>Members</span></div></div>
+<div class="panel"><h2>Recent activity</h2>
+<table><tr><th>Member</th><th>Book</th><th>Action</th><th>Date</th></tr>
+{% for r in recent %}<tr><td>{{ r.borrower_name }}</td><td>{{ r.title }}</td><td><span class="tag{% if r.status == 'Overdue' %} late{% endif %}">{{ r.status }}</span></td><td>{{ (r.return_date or r.issue_date).strftime('%d %b %Y') }}</td></tr>
+{% else %}<tr><td colspan="4">No activity yet.</td></tr>{% endfor %}</table></div>
+</main></div></body></html>

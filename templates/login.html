@@ -1,0 +1,10 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log in | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><div class="auth"><div class="box">
+<a class="logo" href="index.html"><i></i>Central Library</a>
+<h1>Log in</h1><p>Use your student ID to access your account.</p>
+{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}<form action="/login" method="POST">
+<label for="id">Student ID</label><input id="id" name="student_id" required autocomplete="username">
+<label for="pw">Password</label><input id="pw" name="password" type="password" required autocomplete="current-password">
+<button class="btn" type="submit">Log in</button></form>
+<p class="note">New here? <a href="register.html">Create an account</a></p>
+</div></div></body></html>

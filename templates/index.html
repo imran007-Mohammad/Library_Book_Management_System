@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Central Library | Search, borrow and return books</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Literata:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#16213a; --paper:#eef2f6; --card:#ffffff; --teal:#1e6f6b; --brick:#b4472f;
+  --gold:#e0a526; --muted:#55627a; --line:#cfd8e3;
+  --head:'Bricolage Grotesque','Trebuchet MS',sans-serif;
+  --body:'Literata',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.65;font-size:1.05rem}
+h1,h2,h3{font-family:var(--head);line-height:1.1;letter-spacing:-.02em}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* Header */
+header{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+.logo{font-family:var(--head);font-weight:800;font-size:1.3rem;text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo i{width:26px;height:26px;background:var(--teal);border-radius:4px 4px 4px 0;display:block;box-shadow:inset -8px 0 0 var(--gold)}
+nav ul{display:flex;gap:28px;list-style:none;align-items:center}
+nav a{text-decoration:none;font-family:var(--head);font-weight:500}
+nav a:hover{color:var(--teal)}
+.btn{display:inline-block;font-family:var(--head);font-weight:700;padding:12px 22px;border-radius:6px;text-decoration:none;border:2px solid var(--ink);cursor:pointer;font-size:1rem}
+.btn-main{background:var(--ink);color:#fff}
+.btn-main:hover{background:var(--teal);border-color:var(--teal)}
+.btn-line{background:transparent;color:var(--ink)}
+.btn-line:hover{background:var(--ink);color:#fff}
+@media(max-width:760px){nav li:not(:last-child){display:none}}
+
+/* Hero */
+.hero{padding:72px 0 80px}
+.hero .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
+.hero h1{font-size:clamp(2.4rem,5.4vw,4.2rem);font-weight:800;margin-bottom:20px}
+.hero p.lead{font-size:1.15rem;color:var(--muted);max-width:46ch;margin-bottom:28px}
+.search{display:flex;background:var(--card);border:2px solid var(--ink);border-radius:8px;overflow:hidden;max-width:560px}
+.search input{flex:1;border:0;padding:16px 18px;font:inherit;background:transparent;min-width:0}
+.search input:focus-visible{outline:none}
+.search:focus-within{outline:3px solid var(--gold);outline-offset:3px}
+.search button{border:0;background:var(--ink);color:#fff;font-family:var(--head);font-weight:700;padding:0 24px;cursor:pointer;font-size:1rem}
+.search button:hover{background:var(--teal)}
+.hint{margin-top:14px;color:var(--muted);font-size:.95rem}
+.hint a{color:var(--teal);font-weight:500}
+
+/* Spines: the one memorable element */
+.shelf{display:flex;align-items:flex-end;justify-content:center;gap:6px;height:340px;border-bottom:10px solid var(--ink);padding:0 10px}
+.spine{writing-mode:vertical-rl;text-orientation:mixed;font-family:var(--head);font-weight:700;color:#fff;padding:18px 0;text-align:center;border-radius:4px 4px 0 0;font-size:.95rem;width:46px;box-shadow:inset 0 10px 0 rgba(255,255,255,.25),inset 0 -10px 0 rgba(0,0,0,.18)}
+.spine:nth-child(1){height:250px;background:var(--teal)}
+.spine:nth-child(2){height:310px;background:var(--brick)}
+.spine:nth-child(3){height:220px;background:var(--gold);color:var(--ink)}
+.spine:nth-child(4){height:290px;background:var(--ink)}
+.spine:nth-child(5){height:260px;background:#4a6fa5}
+.spine:nth-child(6){height:325px;background:var(--teal)}
+.spine:nth-child(7){height:235px;background:var(--brick)}
+.spine{transform-origin:bottom center;animation:settle .7s ease-out both}
+.spine:nth-child(2){animation-delay:.08s}.spine:nth-child(3){animation-delay:.16s}.spine:nth-child(4){animation-delay:.24s}
+.spine:nth-child(5){animation-delay:.32s}.spine:nth-child(6){animation-delay:.4s}.spine:nth-child(7){animation-delay:.48s}
+@keyframes settle{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@media(max-width:860px){.hero .wrap{grid-template-columns:1fr}.shelf{height:260px}.spine{width:38px;font-size:.8rem}}
+
+/* Sections */
+section{padding:72px 0}
+.sec-head{margin-bottom:36px;max-width:620px}
+.sec-head h2{font-size:clamp(1.8rem,3.6vw,2.6rem);margin-bottom:10px}
+.sec-head p{color:var(--muted)}
+.band{background:var(--ink);color:#fff}
+.band .sec-head p{color:#b9c4d8}
+
+/* Categories */
+.cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.cat{background:var(--card);border:1px solid var(--line);border-left:8px solid var(--c);padding:20px;text-decoration:none;display:block}
+.cat:hover{border-color:var(--c);background:#fafcfe}
+.cat h3{font-size:1.15rem;margin-bottom:4px}
+.cat span{color:var(--muted);font-size:.9rem}
+
+/* New arrivals */
+.books{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:20px}
+.book{background:var(--card);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:6px}
+.cover{height:120px;border-radius:4px;margin-bottom:10px;display:flex;align-items:flex-end;padding:12px;color:#fff;font-family:var(--head);font-weight:700;font-size:1.05rem;line-height:1.15;background:var(--c)}
+.book h3{font-size:1.1rem}
+.book p{color:var(--muted);font-size:.92rem}
+.tag{align-self:flex-start;margin-top:6px;font-family:var(--head);font-size:.82rem;font-weight:700;padding:3px 10px;border-radius:99px;background:#dff1ea;color:#13584f}
+.tag.out{background:#f8e1db;color:#8b2f1b}
+#empty{display:none;margin-top:18px;color:var(--muted)}
+
+/* Steps */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:28px;list-style:none;counter-reset:s}
+.steps li{counter-increment:s;border-top:3px solid var(--gold);padding-top:16px}
+.steps li::before{content:counter(s);font-family:var(--head);font-weight:800;font-size:2.2rem;color:var(--gold);display:block;line-height:1}
+.steps h3{font-size:1.2rem;margin:8px 0 6px}
+.steps p{color:#b9c4d8;font-size:.97rem}
+
+/* Info */
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+.panel{background:var(--card);border:1px solid var(--line);padding:26px}
+.panel h3{font-size:1.2rem;margin-bottom:10px}
+.panel dl{display:grid;grid-template-columns:auto 1fr;gap:6px 18px}
+.panel dt{font-weight:500}
+.panel dd{color:var(--muted)}
+.panel li{margin-left:18px;color:var(--muted)}
+
+/* CTA + footer */
+.cta{text-align:center}
+.cta h2{font-size:clamp(1.8rem,3.6vw,2.6rem);margin-bottom:12px}
+.cta p{color:var(--muted);margin-bottom:24px}
+.cta .btn+.btn{margin-left:10px}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:.92rem}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.spine{animation:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top"><i aria-hidden="true"></i>Central Library</a>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#arrivals">New arrivals</a></li>
+        <li><a href="#categories">Categories</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#visit">Visit</a></li>
+        <li><a class="btn btn-main" href="login.html">Log in</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Find your next book in seconds.</h1>
+        <p class="lead">Search the full catalogue, check what is on the shelf, and borrow with your student ID.</p>
+        <form class="search" role="search" onsubmit="event.preventDefault();runSearch()">
+          <label for="q" class="sr" style="position:absolute;left:-9999px">Search books</label>
+          <input id="q" type="search" placeholder="Title, author or ISBN" autocomplete="off">
+          <button type="submit">Search</button>
+        </form>
+        <p class="hint">Popular: <a href="#arrivals" data-s="python">Python</a>, <a href="#arrivals" data-s="data">Data Structures</a>, <a href="#arrivals" data-s="math">Mathematics</a></p>
+      </div>
+      <div class="shelf" aria-hidden="true">
+        <div class="spine">Algorithms</div>
+        <div class="spine">Database Systems</div>
+        <div class="spine">Calculus</div>
+        <div class="spine">Operating Systems</div>
+        <div class="spine">Machine Learning</div>
+        <div class="spine">Python Basics</div>
+        <div class="spine">Physics</div>
+      </div>
+    </div>
+  </div>
+
+  <section id="categories" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head"><h2>Browse by subject</h2><p>Pick a shelf to see every title in it.</p></div>
+      <div class="cats">
+        <a class="cat" href="#arrivals" style="--c:var(--teal)"><h3>Computer Science</h3><span>420 titles</span></a>
+        <a class="cat" href="#arrivals" style="--c:var(--brick)"><h3>Mathematics</h3><span>260 titles</span></a>
+        <a class="cat" href="#arrivals" style="--c:var(--gold)"><h3>Engineering</h3><span>380 titles</span></a>
+        <a class="cat" href="#arrivals" style="--c:#4a6fa5"><h3>Science</h3><span>310 titles</span></a>
+        <a class="cat" href="#arrivals" style="--c:var(--ink)"><h3>Literature</h3><span>540 titles</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="arrivals" style="padding-top:0">
+    <div class="wrap">
+      <div class="sec-head"><h2>New arrivals</h2><p>Added this month. Availability updates when a book is borrowed or returned.</p></div>
+      <div class="books" id="books">
+        <article class="book" data-t="python crash course eric matthes programming"><div class="cover" style="--c:var(--teal)">Python Crash Course</div><h3>Python Crash Course</h3><p>Eric Matthes</p><span class="tag">3 copies available</span></article>
+        <article class="book" data-t="introduction to algorithms data structures cormen"><div class="cover" style="--c:var(--ink)">Introduction to Algorithms</div><h3>Introduction to Algorithms</h3><p>Thomas H. Cormen</p><span class="tag">1 copy available</span></article>
+        <article class="book" data-t="database system concepts silberschatz sql"><div class="cover" style="--c:var(--brick)">Database System Concepts</div><h3>Database System Concepts</h3><p>Abraham Silberschatz</p><span class="tag out">All copies borrowed</span></article>
+        <article class="book" data-t="higher engineering mathematics grewal math"><div class="cover" style="--c:#4a6fa5">Higher Engineering Mathematics</div><h3>Higher Engineering Mathematics</h3><p>B. S. Grewal</p><span class="tag">5 copies available</span></article>
+        <article class="book" data-t="hands-on machine learning aurelien geron data ai"><div class="cover" style="--c:var(--teal)">Hands-On Machine Learning</div><h3>Hands-On Machine Learning</h3><p>Aurélien Géron</p><span class="tag">2 copies available</span></article>
+        <article class="book" data-t="wings of fire apj abdul kalam biography"><div class="cover" style="--c:var(--gold);color:#16213a">Wings of Fire</div><h3>Wings of Fire</h3><p>A. P. J. Abdul Kalam</p><span class="tag">4 copies available</span></article>
+      </div>
+      <p id="empty">No books match that search. Check the spelling or try an author name.</p>
+    </div>
+  </section>
+
+  <section id="how" class="band">
+    <div class="wrap">
+      <div class="sec-head"><h2>Borrow in four steps</h2><p>Members can hold up to 3 books at a time.</p></div>
+      <ol class="steps">
+        <li><h3>Search</h3><p>Look up a title, author or ISBN and check availability.</p></li>
+        <li><h3>Reserve</h3><p>Log in and reserve the book. It is held for you for 24 hours.</p></li>
+        <li><h3>Collect</h3><p>Show your student ID at the desk and take the book home.</p></li>
+        <li><h3>Return</h3><p>Bring it back within 14 days, or renew online once.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="visit">
+    <div class="wrap info">
+      <div class="panel">
+        <h3>Opening hours</h3>
+        <dl>
+          <dt>Mon to Fri</dt><dd>8:30 AM to 8:00 PM</dd>
+          <dt>Saturday</dt><dd>9:00 AM to 5:00 PM</dd>
+          <dt>Sunday</dt><dd>Closed</dd>
+        </dl>
+      </div>
+      <div class="panel">
+        <h3>Library rules</h3>
+        <ul><li>14-day loan period</li><li>Fine of ₹2 per day after the due date</li><li>Keep silence in reading rooms</li></ul>
+      </div>
+      <div class="panel">
+        <h3>Contact</h3>
+        <p style="color:var(--muted)">Central Library, Ground Floor, Main Block<br>library@youruniversity.edu<br>+91 00000 00000</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" style="padding-top:0">
+    <div class="wrap">
+      <h2>Ready to start reading?</h2>
+      <p>Create your library account with your student ID.</p>
+      <a class="btn btn-main" href="register.html">Create account</a><a class="btn btn-line" href="login.html">Log in</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap"><span>© 2026 Central Library</span><span>Built with HTML and CSS</span></div>
+</footer>
+
+<script>
+  const q = document.getElementById('q');
+  const cards = [...document.querySelectorAll('#books .book')];
+  const empty = document.getElementById('empty');
+
+  function runSearch() {
+    const term = q.value.trim().toLowerCase();
+    let shown = 0;
+    cards.forEach(c => {
+      const hit = !term || c.dataset.t.includes(term);
+      c.style.display = hit ? '' : 'none';
+      if (hit) shown++;
+    });
+    empty.style.display = shown ? 'none' : 'block';
+    document.getElementById('arrivals').scrollIntoView({behavior:'smooth'});
+  }
+
+  q.addEventListener('input', () => {
+    if (!q.value.trim()) runSearch();
+  });
+
+  document.querySelectorAll('[data-s]').forEach(a =>
+    a.addEventListener('click', () => { q.value = a.dataset.s; setTimeout(runSearch, 0); })
+  );
+</script>
+</body>
+</html>

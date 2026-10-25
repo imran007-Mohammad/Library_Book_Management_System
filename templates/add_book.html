@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add book | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
+<aside><a class="logo" href="index.html"><i></i>Central Library</a>
+<a class="nav" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav on" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
+<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
+<h1>Add book</h1><p class="sub">Enter the details exactly as printed on the book.</p>
+<div class="panel" style="max-width:640px"><form action="/add_book" method="POST">
+<label for="t">Title</label><input id="t" name="title" required>
+<div class="row"><div><label for="a">Author</label><input id="a" name="author" required></div>
+<div><label for="i">ISBN</label><input id="i" name="isbn" required></div></div>
+<div class="row"><div><label for="c">Category</label><select id="c" name="category"><option>Computer Science</option><option>Mathematics</option><option>Engineering</option><option>Science</option><option>Literature</option></select></div>
+<div><label for="q">Number of copies</label><input id="q" name="copies" type="number" min="1" value="1" required></div></div>
+<button class="btn" type="submit">Save book</button></form></div>
+</main></div></body></html>

@@ -1,0 +1,9 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Members | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
+<aside><a class="logo" href="index.html"><i></i>Central Library</a>
+<a class="nav" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav on" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
+<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
+<h1>Members</h1><p class="sub">Everyone registered with the library.</p>
+<div class="panel"><table><tr><th>Student ID</th><th>Name</th><th>Department</th><th>Books held</th><th>Fine due</th></tr>
+{% for m in members %}<tr><td>{{ m.roll_no }}</td><td>{{ m.borrower_name }}</td><td>{{ m.department }}</td><td>{{ m.books_held }}</td><td>₹{{ m.fine_due }}</td></tr>
+{% else %}<tr><td colspan="5">No members yet.</td></tr>{% endfor %}</table></div>
+</main></div></body></html>
