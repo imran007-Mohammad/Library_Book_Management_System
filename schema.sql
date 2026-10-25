@@ -6,8 +6,13 @@
 -- It drops the existing library_db database and all its data.
 -- Back up anything you need before running this file.
 
-DROP DATABASE IF EXISTS library_db;
-CREATE DATABASE library_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- Create the database if it does not already exist.
+-- This does not delete existing database records.
+
+CREATE DATABASE IF NOT EXISTS library_db
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
 USE library_db;
 
 -- Accounts for students and librarians.
