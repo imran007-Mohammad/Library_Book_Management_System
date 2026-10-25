@@ -1,10 +1,640 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Log in | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
-<body><div class="auth"><div class="box">
-<a class="logo" href="index.html"><i></i>Central Library</a>
-<h1>Log in</h1><p>Use your student ID to access your account.</p>
-{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}<form action="/login" method="POST">
-<label for="id">Student ID</label><input id="id" name="student_id" required autocomplete="username">
-<label for="pw">Password</label><input id="pw" name="password" type="password" required autocomplete="current-password">
-<button class="btn" type="submit">Log in</button></form>
-<p class="note">New here? <a href="register.html">Create an account</a></p>
-</div></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Sign In | Central Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Literata:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --teal: #1e6f6b;
+            --gold: #e0a526;
+            --muted: #55627a;
+            --line: #cfd8e3;
+            --head: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+            --body: 'Literata', Georgia, serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--body);
+            color: var(--ink);
+            background: var(--paper);
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        input, button {
+            font: inherit;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        /* Header */
+
+        header {
+            border-bottom: 1px solid var(--line);
+            background: var(--paper);
+        }
+
+        .nav {
+            max-width: 1120px;
+            min-height: 76px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--head);
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 27px;
+            height: 27px;
+            flex-shrink: 0;
+            background: var(--teal);
+            border-radius: 4px 4px 4px 0;
+            box-shadow: inset -8px 0 0 var(--gold);
+        }
+
+        .home-link {
+            padding: 9px 15px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: white;
+            color: var(--ink);
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+        .home-link:hover {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: white;
+        }
+
+        /* Main layout */
+
+        main {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 56px 24px 64px;
+        }
+
+        .login-layout {
+            display: grid;
+            grid-template-columns: 1fr 440px;
+            align-items: center;
+            gap: 70px;
+        }
+
+        /* Introduction */
+
+        .intro {
+            max-width: 510px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .83rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 28px;
+            height: 3px;
+            background: var(--gold);
+        }
+
+        .intro h1 {
+            margin-bottom: 22px;
+            font-family: var(--head);
+            font-size: clamp(2.6rem, 5vw, 4.1rem);
+            font-weight: 800;
+            letter-spacing: -.04em;
+            line-height: 1.08;
+        }
+
+        .intro h1 span {
+            color: var(--teal);
+        }
+
+        .intro > p {
+            max-width: 44ch;
+            margin-bottom: 30px;
+            color: var(--muted);
+            font-size: 1.07rem;
+        }
+
+        .benefits {
+            display: grid;
+            gap: 19px;
+            margin-top: 30px;
+        }
+
+        .benefit {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: white;
+            color: var(--teal);
+            font-family: var(--head);
+            font-weight: 800;
+        }
+
+        .benefit h3 {
+            margin-bottom: 3px;
+            font-family: var(--head);
+            font-size: 1rem;
+        }
+
+        .benefit p {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        /* Login card */
+
+        .login-card {
+            width: 100%;
+            padding: 36px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--card);
+            box-shadow: 0 12px 34px rgba(22, 33, 58, .05);
+        }
+
+        .card-top {
+            margin-bottom: 28px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 5px 11px;
+            border: 1px solid #c5d9d7;
+            border-radius: 5px;
+            background: #e5f0ef;
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .79rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .card-top h2 {
+            margin-bottom: 7px;
+            font-family: var(--head);
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -.025em;
+        }
+
+        .card-top p {
+            color: var(--muted);
+            font-size: .94rem;
+        }
+
+        /* Messages */
+
+        .messages {
+            margin-bottom: 18px;
+        }
+
+        .message {
+            margin-bottom: 9px;
+            padding: 11px 13px;
+            border: 1px solid #e7c5bd;
+            border-radius: 6px;
+            background: #fcf0ed;
+            color: #873522;
+            font-size: .88rem;
+            overflow-wrap: anywhere;
+        }
+
+        /* Form */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        .form-group input {
+            display: block;
+            width: 100%;
+            min-height: 49px;
+            padding: 12px 14px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: white;
+            color: var(--ink);
+            font-family: var(--body);
+            font-size: .95rem;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .form-group input::placeholder {
+            color: #8993a4;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(30, 111, 107, .12);
+        }
+
+        .field-help {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: .8rem;
+        }
+
+        .forgot-row {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: -7px;
+            margin-bottom: 23px;
+        }
+
+        .text-link {
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .88rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .text-link:hover {
+            text-decoration: underline;
+        }
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            min-height: 51px;
+            padding: 13px 18px;
+            border: 2px solid var(--ink);
+            border-radius: 6px;
+            background: var(--ink);
+            color: white;
+            font-family: var(--head);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: var(--muted);
+            font-size: .82rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        .register-note {
+            color: var(--muted);
+            text-align: center;
+            font-size: .9rem;
+        }
+
+        .register-note a {
+            color: var(--teal);
+            font-family: var(--head);
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .register-note a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+
+        footer {
+            padding: 22px 24px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        .footer-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Responsive */
+
+        @media(max-width: 900px) {
+            .login-layout {
+                grid-template-columns: 1fr;
+                gap: 34px;
+                max-width: 580px;
+                margin: 0 auto;
+            }
+
+            .intro {
+                max-width: 100%;
+            }
+
+            .intro h1 {
+                font-size: clamp(2.6rem, 7vw, 3.5rem);
+            }
+
+            .login-card {
+                padding: 30px;
+            }
+        }
+
+        @media(max-width: 520px) {
+            .nav {
+                min-height: 68px;
+                padding: 12px 17px;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .home-link {
+                padding: 8px 11px;
+                font-size: .82rem;
+            }
+
+            main {
+                padding: 35px 17px 44px;
+            }
+
+            .intro h1 {
+                font-size: 2.55rem;
+            }
+
+            .intro > p {
+                font-size: .98rem;
+            }
+
+            .login-card {
+                padding: 24px 20px;
+            }
+
+            .card-top h2 {
+                font-size: 1.7rem;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+            }
+        }
+
+        @media(prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="nav">
+
+        <a class="logo" href="{{ url_for('home') }}">
+            <span class="logo-icon" aria-hidden="true"></span>
+            Central Library
+        </a>
+
+        <a class="home-link" href="{{ url_for('home') }}">
+            ← Back to Home
+        </a>
+
+    </div>
+</header>
+
+<main>
+
+    {% set selected_role = selected_role|default(request.args.get('role', 'student')) %}
+
+    {% if selected_role not in ['student', 'librarian'] %}
+        {% set selected_role = 'student' %}
+    {% endif %}
+
+    <div class="login-layout">
+
+        <section class="intro">
+
+            <div class="eyebrow">Your library, your way</div>
+
+            <h1>
+                A good book<br>
+                is always <span>worth it.</span>
+            </h1>
+
+            <p>
+                Sign in to access your library account, explore books,
+                and keep track of your borrowing activity.
+            </p>
+
+            <div class="benefits">
+
+                <div class="benefit">
+                    <div class="benefit-icon" aria-hidden="true">01</div>
+
+                    <div>
+                        <h3>Explore the catalogue</h3>
+                        <p>Find books by title, author and subject.</p>
+                    </div>
+                </div>
+
+                <div class="benefit">
+                    <div class="benefit-icon" aria-hidden="true">02</div>
+
+                    <div>
+                        <h3>Manage your borrowing</h3>
+                        <p>Keep track of your library activity.</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="login-card" aria-labelledby="loginTitle">
+
+            <div class="card-top">
+
+                <span class="role-badge">
+                    {{ 'Student Account' if selected_role == 'student' else 'Librarian Account' }}
+                </span>
+
+                <h2 id="loginTitle">Welcome back</h2>
+
+                <p>Enter your details to sign in.</p>
+
+            </div>
+
+            <div class="messages" aria-live="polite">
+                {% for message in get_flashed_messages() | unique %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+
+            <form
+                method="POST"
+                action="{{ url_for('login', role=selected_role) }}">
+
+                <input
+                    type="hidden"
+                    name="role"
+                    value="{{ selected_role }}">
+
+                <div class="form-group">
+
+                    <label for="student_id">
+                        {{ 'Student Roll Number' if selected_role == 'student' else 'Librarian ID' }}
+                    </label>
+
+                    <input
+                        type="text"
+                        id="student_id"
+                        name="student_id"
+                        placeholder="{{ 'Enter your student roll number' if selected_role == 'student' else 'Enter your librarian ID' }}"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        required>
+
+                    <p class="field-help">
+                        {{ 'Enter the roll number you used when registering.' if selected_role == 'student' else 'Enter your registered librarian ID, e.g. MBU123456.' }}
+                    </p>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="password">Password</label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        autocomplete="current-password"
+                        required>
+
+                </div>
+
+                <div class="forgot-row">
+                    <a class="text-link"
+                       href="{{ url_for('forgot_password') }}">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    Sign in →
+                </button>
+
+            </form>
+
+            <div class="divider">New to the library?</div>
+
+            <p class="register-note">
+                Don't have an account?
+                <a href="{{ url_for('register', role=selected_role) }}">
+                    Create account
+                </a>
+            </p>
+
+        </section>
+
+    </div>
+
+</main>
+
+<footer>
+    <div class="footer-inner">
+        <span>© 2026 Central Library</span>
+        <span>A place for learning and discovery.</span>
+    </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,155 @@
+/* ========================================
+   CENTRAL LIBRARY — SHARED NAVIGATION
+   Same layout as books.html
+   ======================================== */
+
+header {
+    display: block;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #eef2f6;
+    border-bottom: 1px solid #cfd8e3;
+}
+
+header .wrap.nav {
+    width: 100%;
+    max-width: 1250px;
+    min-height: 76px;
+    height: auto;
+    margin: 0 auto;
+    padding: 12px 22px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+header .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+
+    color: #16213a;
+    font-family: "Trebuchet MS", sans-serif;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1.3;
+
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+header .logo i {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+
+    background: #1e6f6b;
+    border-radius: 4px 4px 4px 0;
+    box-shadow: inset -8px 0 0 #e0a526;
+}
+
+header nav {
+    display: block;
+    width: auto;
+    margin-left: auto;
+}
+
+header nav ul {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+header nav ul li {
+    display: block;
+    margin: 0;
+    padding: 0;
+}
+
+header nav ul li a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+
+    color: #16213a;
+    background: transparent;
+
+    font-family: "Trebuchet MS", sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.4;
+
+    text-decoration: none;
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
+}
+
+header nav ul li a:visited {
+    color: #16213a;
+}
+
+header nav ul li a:hover {
+    color: #1e6f6b;
+    background: #dce8e8;
+    border-color: #c5d9d7;
+    text-decoration: none;
+}
+
+header nav ul li a:focus-visible {
+    outline: 3px solid #e0a526;
+    outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+    header .wrap.nav {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 12px;
+        padding-top: 16px;
+        padding-bottom: 16px;
+    }
+
+    header nav {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    header nav ul {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    header .wrap.nav {
+        padding: 14px;
+    }
+
+    header nav ul {
+        gap: 4px;
+    }
+
+    header nav ul li a {
+        padding: 8px;
+        font-size: 0.84rem;
+    }
+}

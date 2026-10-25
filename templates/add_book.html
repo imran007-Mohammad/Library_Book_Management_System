@@ -1,13 +1,414 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add book | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
-<aside><a class="logo" href="index.html"><i></i>Central Library</a>
-<a class="nav" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav on" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
-<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
-<h1>Add book</h1><p class="sub">Enter the details exactly as printed on the book.</p>
-<div class="panel" style="max-width:640px"><form action="/add_book" method="POST">
-<label for="t">Title</label><input id="t" name="title" required>
-<div class="row"><div><label for="a">Author</label><input id="a" name="author" required></div>
-<div><label for="i">ISBN</label><input id="i" name="isbn" required></div></div>
-<div class="row"><div><label for="c">Category</label><select id="c" name="category"><option>Computer Science</option><option>Mathematics</option><option>Engineering</option><option>Science</option><option>Literature</option></select></div>
-<div><label for="q">Number of copies</label><input id="q" name="copies" type="number" min="1" value="1" required></div></div>
-<button class="btn" type="submit">Save book</button></form></div>
-</main></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Add Book | Central Library</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='library_nav.css') }}">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --muted: #55627a;
+            --line: #cfd8e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .page-content {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 32px 22px;
+        }
+
+        .page-heading {
+            margin-bottom: 26px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: clamp(1.9rem, 4vw, 2.5rem);
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .flash-message {
+            margin-bottom: 12px;
+            padding: 11px 14px;
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--ink);
+            border-radius: 6px;
+            color: var(--ink);
+        }
+
+        .form-card {
+    width: 100%;
+    max-width: 1100px;
+    padding: 32px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+}
+
+        .form-card h2 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: 1.35rem;
+        }
+
+        .form-description {
+            margin: 0 0 24px;
+            color: var(--muted);
+        }
+
+        .book-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .form-field label {
+            color: var(--ink);
+            font-weight: 700;
+            font-size: 0.94rem;
+        }
+
+        .form-field input,
+        .form-field select {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            padding: 11px 13px;
+
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+
+            font: inherit;
+        }
+
+        .form-field input::placeholder {
+            color: #8791a2;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px;
+            border-color: var(--ink);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .save-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 11px 22px;
+
+            background: var(--ink);
+            color: #ffffff;
+            border: 1px solid var(--ink);
+            border-radius: 6px;
+
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .save-button:hover {
+            background: #303b53;
+            border-color: #303b53;
+        }
+
+        .cancel-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 10px 16px;
+
+            background: #ffffff;
+            color: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .cancel-link:hover {
+            background: #e5eaf0;
+            color: var(--ink);
+        }
+
+        .required-note {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        @media (max-width: 600px) {
+            .page-content {
+                padding: 24px 14px;
+            }
+
+            .form-card {
+                padding: 20px 16px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Shared navigation used by the Dashboard and Books pages -->
+    {% include '_navigation.html' %}
+
+    <main class="page-content">
+
+        <div class="page-heading">
+            <h1>Add Book</h1>
+            <p>
+                Enter the book details exactly as printed on the book.
+                Include its location so students can find it easily.
+            </p>
+        </div>
+
+        <!-- Display each notification only once -->
+        {% for message in get_flashed_messages() | unique %}
+            <div class="flash-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <section class="form-card">
+
+            <h2>Book Details</h2>
+
+            <p class="form-description">
+                Fields marked with * are required.
+            </p>
+
+            <form
+                class="book-form"
+                action="{{ url_for('add_book') }}"
+                method="POST">
+
+                <!-- Book title -->
+                <div class="form-field">
+                    <label for="title">Book Title *</label>
+
+                    <input
+                        id="title"
+                        name="title"
+                        type="text"
+                        placeholder="Enter the complete book title"
+                        required>
+                </div>
+
+                <!-- Author and ISBN -->
+                <div class="form-row">
+
+                    <div class="form-field">
+                        <label for="author">Author *</label>
+
+                        <input
+                            id="author"
+                            name="author"
+                            type="text"
+                            placeholder="Enter author name"
+                            required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="isbn">ISBN *</label>
+
+                        <input
+                            id="isbn"
+                            name="isbn"
+                            type="text"
+                            placeholder="Enter ISBN"
+                            required>
+                    </div>
+
+                </div>
+
+                <!-- Category and copies -->
+                <div class="form-row">
+
+                    <div class="form-field">
+                        <label for="category">Category</label>
+
+                        <select id="category" name="category">
+                            <option value="Computer Science">
+                                Computer Science
+                            </option>
+
+                            <option value="Programming">
+                                Programming
+                            </option>
+
+                            <option value="Artificial Intelligence">
+                                Artificial Intelligence
+                            </option>
+
+                            <option value="Mathematics">
+                                Mathematics
+                            </option>
+
+                            <option value="Engineering">
+                                Engineering
+                            </option>
+
+                            <option value="Science">
+                                Science
+                            </option>
+
+                            <option value="Literature">
+                                Literature
+                            </option>
+
+                            <option value="Biography">
+                                Biography
+                            </option>
+
+                            <option value="General">
+                                General
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="copies">Number of Copies *</label>
+
+                        <input
+                            id="copies"
+                            name="copies"
+                            type="number"
+                            min="1"
+                            step="1"
+                            value="1"
+                            required>
+                    </div>
+
+                </div>
+
+                <!-- Physical location -->
+                <div class="form-row">
+
+                    <div class="form-field">
+                        <label for="floor">Floor</label>
+
+                        <input
+                            id="floor"
+                            name="floor"
+                            type="text"
+                            placeholder="Example: First Floor">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="rack_number">Rack Number</label>
+
+                        <input
+                            id="rack_number"
+                            name="rack_number"
+                            type="text"
+                            placeholder="Example: RACK-CS-01">
+                    </div>
+
+                </div>
+
+                <!-- Series code -->
+                <div class="form-field">
+                    <label for="series_code">Series Code</label>
+
+                    <input
+                        id="series_code"
+                        name="series_code"
+                        type="text"
+                        placeholder="Example: CS-PY-001">
+                </div>
+
+                <!-- Form actions -->
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        class="save-button">
+                        Save Book
+                    </button>
+
+                    <a
+                        href="{{ url_for('books') }}"
+                        class="cancel-link">
+                        Cancel
+                    </a>
+
+                </div>
+
+                <p class="required-note">
+                    The available-copy count will initially equal the
+                    total number of copies entered.
+                </p>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</body>
+</html>
