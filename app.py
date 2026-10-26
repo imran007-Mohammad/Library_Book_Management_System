@@ -12,9 +12,9 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.environ["SECRET_KEY"]
 
-LOAN_DAYS = int(os.getenv("LOAN_DAYS", 14))        # default loan period (configurable)
-FINE_PER_DAY = int(os.getenv("FINE_PER_DAY", 2))   # rupees per overdue day
-MAX_LOANS = int(os.getenv("MAX_LOANS", 3))         # books a member can hold at once
+LOAN_DAYS = int(os.getenv("LOAN_DAYS", 30))       
+FINE_PER_DAY = int(os.getenv("FINE_PER_DAY", 30))  
+MAX_LOANS = int(os.getenv("MAX_LOANS", 3))        
 
 
 def get_db():
@@ -207,7 +207,6 @@ def members():
     return render_template("members.html", members=rows)
 
 
-# ---------- issue and return ----------
 @app.route("/issue_return")
 @app.route("/issue_return.html")
 @admin_required
@@ -242,7 +241,7 @@ def issue():
         db = get_db()
         cur = db.cursor()
         try:
-            # The "> 0" guard stops two librarians issuing the last copy at the same time.
+            
             cur.execute("UPDATE books SET copies_available = copies_available - 1 "
                         "WHERE book_id=%s AND copies_available > 0", (book["book_id"],))
             if cur.rowcount == 0:
@@ -302,7 +301,6 @@ def return_book():
     return redirect(url_for("issue_return"))
 
 
-# ---------- analysis data (use with Pandas / Matplotlib) ----------
 @app.route("/api/analytics")
 @admin_required
 def analytics():
@@ -326,4 +324,4 @@ def analytics():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)   # turn debug off before deploying
+    app.run(debug=True)   
