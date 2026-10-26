@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>My Borrows | Central Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Literata:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --teal: #1e6f6b;
+            --gold: #e0a526;
+            --muted: #55627a;
+            --line: #cfd8e3;
+            --head: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+            --body: 'Literata', Georgia, serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--body);
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        /* Navigation */
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--paper);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav {
+            max-width: 1200px;
+            min-height: 76px;
+            margin: 0 auto;
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            font-family: var(--head);
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            display: block;
+            width: 27px;
+            height: 27px;
+            flex-shrink: 0;
+            border-radius: 4px 4px 4px 0;
+            background: var(--teal);
+            box-shadow: inset -8px 0 0 var(--gold);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 42px;
+            padding: 9px 14px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            color: var(--ink);
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+        .nav-link:hover {
+            background: #dce8e8;
+            border-color: #c5d9d7;
+            color: var(--teal);
+        }
+
+        .nav-link.logout {
+            background: white;
+            border-color: var(--line);
+        }
+
+        .nav-link.logout:hover {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: white;
+        }
+
+        /* Main page */
+
+        main {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 38px 28px 64px;
+        }
+
+        /* Welcome section */
+
+        .welcome {
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 28px;
+            padding: 36px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            background: var(--ink);
+            color: white;
+        }
+
+        .welcome::after {
+            content: "";
+            position: absolute;
+            width: 210px;
+            height: 210px;
+            right: -55px;
+            top: -95px;
+            border: 35px solid rgba(255, 255, 255, .045);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 1;
+            min-width: 0;
+        }
+
+        .welcome-eyebrow {
+            margin-bottom: 10px;
+            color: #eac45e;
+            font-family: var(--head);
+            font-size: .8rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+
+        .welcome h1 {
+            margin-bottom: 12px;
+            font-family: var(--head);
+            font-size: clamp(2rem, 4vw, 3.1rem);
+            font-weight: 800;
+            letter-spacing: -.035em;
+            line-height: 1.12;
+            overflow-wrap: anywhere;
+        }
+
+        .welcome-description {
+            max-width: 600px;
+            color: #d0d8e6;
+            font-size: .97rem;
+        }
+
+        .profile-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 24px;
+            margin-top: 25px;
+        }
+
+        .profile-item {
+            min-width: 0;
+            color: #d0d8e6;
+            font-size: .85rem;
+            overflow-wrap: anywhere;
+        }
+
+        .profile-item strong {
+            color: white;
+            font-family: var(--head);
+            font-weight: 700;
+        }
+
+        .welcome-mark {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            place-items: center;
+            width: 90px;
+            height: 90px;
+            flex-shrink: 0;
+            border: 1px solid rgba(255, 255, 255, .24);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .07);
+            color: #eac45e;
+            font-family: var(--head);
+            font-size: 2.2rem;
+            font-weight: 800;
+        }
+
+        /* Flash messages */
+
+        .messages {
+            margin-bottom: 24px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 13px 16px;
+            border: 1px solid #ead8a4;
+            border-left: 4px solid var(--gold);
+            border-radius: 6px;
+            background: #fff8e4;
+            color: var(--ink);
+            font-size: .9rem;
+            overflow-wrap: anywhere;
+        }
+
+        /* Section headings */
+
+        .section-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .section-heading h2 {
+            margin-bottom: 5px;
+            font-family: var(--head);
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -.025em;
+        }
+
+        .section-heading p {
+            color: var(--muted);
+            font-size: .92rem;
+        }
+
+        .section-label {
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        /* Summary cards */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 42px;
+        }
+
+        .stat-card {
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            padding: 25px;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: var(--card);
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 22px rgba(22, 33, 58, .06);
+        }
+
+        .stat-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 19px;
+        }
+
+        .stat-icon {
+            display: grid;
+            place-items: center;
+            width: 43px;
+            height: 43px;
+            flex-shrink: 0;
+            border: 1px solid #c5d9d7;
+            border-radius: 8px;
+            background: #e5f0ef;
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+
+        .stat-card.borrowed-card .stat-icon {
+            background: #fff4d9;
+            border-color: #f0dfac;
+            color: #946500;
+        }
+
+        .stat-card.overdue-card .stat-icon {
+            background: #fcf0ed;
+            border-color: #e7c5bd;
+            color: #a13d27;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        .stat-value {
+            font-family: var(--head);
+            font-size: 2.6rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -.04em;
+        }
+
+        .stat-description {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: .83rem;
+        }
+
+        .stat-accent {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 75px;
+            height: 4px;
+            background: var(--teal);
+        }
+
+        .borrowed-card .stat-accent {
+            background: var(--gold);
+        }
+
+        .overdue-card .stat-accent {
+            background: #b4472f;
+        }
+
+        /* Borrowing history */
+
+        .history-section {
+            margin-top: 5px;
+        }
+
+        .history-card {
+            overflow: hidden;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            background: white;
+        }
+
+        .history-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .history-top h3 {
+            font-family: var(--head);
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .history-top p {
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        .record-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 5px 11px;
+            border: 1px solid var(--line);
+            border-radius: 5px;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--head);
+            font-size: .8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        thead {
+            background: #f4f6f9;
+        }
+
+        th {
+            padding: 15px 18px;
+            border-bottom: 1px solid var(--line);
+            color: var(--muted);
+            font-family: var(--head);
+            font-size: .76rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 17px 18px;
+            border-bottom: 1px solid #e8edf3;
+            color: var(--ink);
+            font-size: .87rem;
+            vertical-align: top;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #fafcfe;
+        }
+
+        .book-title {
+            min-width: 160px;
+            font-family: var(--head);
+            font-size: .93rem;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .book-author {
+            display: block;
+            margin-top: 5px;
+            color: var(--muted);
+            font-size: .8rem;
+        }
+
+        .date-cell {
+            min-width: 105px;
+            white-space: nowrap;
+        }
+
+        .location-cell {
+            min-width: 145px;
+            color: var(--muted);
+            font-size: .8rem;
+            line-height: 1.8;
+        }
+
+        .location-cell strong {
+            color: var(--ink);
+            font-weight: 700;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            border: 1px solid transparent;
+            border-radius: 5px;
+            font-family: var(--head);
+            font-size: .77rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .status::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status.overdue {
+            border-color: #edc7be;
+            background: #fcf0ed;
+            color: #9b3521;
+        }
+
+        .status.returned {
+            border-color: #c5d9d7;
+            background: #e5f0ef;
+            color: #1e6f6b;
+        }
+
+        .status.borrowed {
+            border-color: #f0dfac;
+            background: #fff4d9;
+            color: #8c6200;
+        }
+
+        .late-note {
+            display: block;
+            margin-top: 7px;
+            color: #a13d27;
+            font-size: .78rem;
+        }
+
+        /* Empty state */
+
+        .empty-state {
+            padding: 48px 24px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            display: grid;
+            place-items: center;
+            width: 72px;
+            height: 72px;
+            margin: 0 auto 20px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--paper);
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: 2rem;
+            font-weight: 800;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            font-family: var(--head);
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .empty-state p {
+            max-width: 440px;
+            margin: 0 auto 9px;
+            color: var(--muted);
+            font-size: .93rem;
+        }
+
+        .empty-state .button {
+            margin-top: 20px;
+        }
+
+        /* Buttons */
+
+        .button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 45px;
+            padding: 11px 18px;
+            border: 2px solid var(--ink);
+            border-radius: 6px;
+            background: var(--ink);
+            color: white;
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+            text-align: center;
+            text-decoration: none;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .button:hover {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .button-outline {
+            background: white;
+            color: var(--ink);
+        }
+
+        .button-outline:hover {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: white;
+        }
+
+        /* Footer */
+
+        footer {
+            padding: 22px 28px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Responsive styles */
+
+        @media(max-width: 850px) {
+            .welcome {
+                padding: 28px;
+            }
+
+            .welcome-mark {
+                width: 72px;
+                height: 72px;
+                font-size: 1.8rem;
+            }
+
+            .stats {
+                gap: 13px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+        }
+
+        @media(max-width: 650px) {
+            .nav {
+                padding: 12px 17px;
+                min-height: 68px;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .nav-actions {
+                gap: 5px;
+            }
+
+            .nav-link {
+                min-height: 38px;
+                padding: 8px 10px;
+                font-size: .8rem;
+            }
+
+            main {
+                padding: 25px 16px 44px;
+            }
+
+            .welcome {
+                padding: 25px 21px;
+                gap: 14px;
+                align-items: flex-start;
+            }
+
+            .welcome h1 {
+                font-size: 2rem;
+            }
+
+            .welcome-mark {
+                width: 47px;
+                height: 47px;
+                border-radius: 8px;
+                font-size: 1.25rem;
+            }
+
+            .profile-details {
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 21px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 35px;
+            }
+
+            .stat-card {
+                padding: 20px;
+            }
+
+            .stat-top {
+                margin-bottom: 12px;
+            }
+
+            .stat-value {
+                font-size: 2.25rem;
+            }
+
+            .section-heading {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 7px;
+            }
+
+            .history-top {
+                padding: 19px;
+            }
+
+            th, td {
+                padding: 13px 14px;
+            }
+
+            .empty-state {
+                padding: 38px 18px;
+            }
+
+            footer {
+                padding: 21px 17px;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+            }
+        }
+
+        @media(max-width: 390px) {
+            .nav {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-actions {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .welcome {
+                flex-direction: column-reverse;
+            }
+
+            .welcome-mark {
+                width: 44px;
+                height: 44px;
+            }
+        }
+
+        @media(prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="nav">
+
+        <a class="logo" href="{{ url_for('home') }}">
+            <span class="logo-icon" aria-hidden="true"></span>
+            Central Library
+        </a>
+
+        <nav class="nav-actions" aria-label="Student navigation">
+            <a class="nav-link" href="{{ url_for('home') }}">
+                Home
+            </a>
+
+            <a class="nav-link" href="{{ url_for('books') }}">
+                Browse Books
+            </a>
+
+            <a class="nav-link logout" href="{{ url_for('logout') }}">
+                Log Out
+            </a>
+        </nav>
+
+    </div>
+</header>
+
+<main>
+
+    <!-- Welcome banner -->
+
+    <section class="welcome">
+
+        <div class="welcome-content">
+
+            <div class="welcome-eyebrow">Student Dashboard</div>
+
+            <h1>Welcome, {{ student.borrower_name }}!</h1>
+
+            <p class="welcome-description">
+                Your reading journey, all in one place.
+                Check your borrowing activity and keep track of your books.
+            </p>
+
+            <div class="profile-details">
+
+                <div class="profile-item">
+                    <strong>Roll Number:</strong>
+                    {{ student.roll_no }}
+                </div>
+
+                <div class="profile-item">
+                    <strong>Branch:</strong>
+                    {{ student.department }}
+                </div>
+
+                <div class="profile-item">
+                    <strong>Email:</strong>
+                    {{ student.email }}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="welcome-mark" aria-hidden="true">CL</div>
+
+    </section>
+
+    <!-- Flash messages -->
+
+    <div class="messages" aria-live="polite">
+        {% for message in get_flashed_messages() | unique %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Borrowing summary -->
+
+    <section aria-labelledby="summaryTitle">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-label">At a glance</div>
+                <h2 id="summaryTitle">My Borrowing Summary</h2>
+                <p>A quick overview of your library activity.</p>
+            </div>
+
+            <a class="button button-outline" href="{{ url_for('books') }}">
+                Explore Books →
+            </a>
+
+        </div>
+
+        <div class="stats">
+
+            <article class="stat-card">
+
+                <div class="stat-top">
+                    <span class="stat-label">Total Borrowings</span>
+                    <span class="stat-icon" aria-hidden="true">B</span>
+                </div>
+
+                <p class="stat-value">
+                    {{ stats.total_borrowings or 0 }}
+                </p>
+
+                <p class="stat-description">
+                    All borrowing records in your history.
+                </p>
+
+                <div class="stat-accent"></div>
+
+            </article>
+
+            <article class="stat-card borrowed-card">
+
+                <div class="stat-top">
+                    <span class="stat-label">Currently Borrowed</span>
+                    <span class="stat-icon" aria-hidden="true">↗</span>
+                </div>
+
+                <p class="stat-value">
+                    {{ stats.currently_borrowed or 0 }}
+                </p>
+
+                <p class="stat-description">
+                    Books that have not yet been returned.
+                </p>
+
+                <div class="stat-accent"></div>
+
+            </article>
+
+            <article class="stat-card overdue-card">
+
+                <div class="stat-top">
+                    <span class="stat-label">Overdue Books</span>
+                    <span class="stat-icon" aria-hidden="true">!</span>
+                </div>
+
+                <p class="stat-value">
+                    {{ stats.overdue or 0 }}
+                </p>
+
+                <p class="stat-description">
+                    Books past their recorded due date.
+                </p>
+
+                <div class="stat-accent"></div>
+
+            </article>
+
+        </div>
+
+    </section>
+
+    <!-- Borrowing history -->
+
+    <section class="history-section" aria-labelledby="historyTitle">
+
+        <div class="section-heading">
+
+            <div>
+                <div class="section-label">Your reading activity</div>
+                <h2 id="historyTitle">My Borrows</h2>
+                <p>
+                    View borrowed books, due dates, returns and book locations.
+                </p>
+            </div>
+
+        </div>
+
+        <div class="history-card">
+
+            <div class="history-top">
+
+                <div>
+                    <h3>Borrowing History</h3>
+                    <p>Your books and their current status.</p>
+                </div>
+
+                <span class="record-count">
+                    {{ loans|length }} record{{ '' if loans|length == 1 else 's' }}
+                </span>
+
+            </div>
+
+            {% if loans %}
+
+                <div class="table-container">
+
+                    <table>
+
+                        <thead>
+                            <tr>
+                                <th>Book Details</th>
+                                <th>Issue Date</th>
+                                <th>Due Date</th>
+                                <th>Return Date</th>
+                                <th>Book Location</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for loan in loans %}
+
+                            <tr>
+
+                                <td>
+                                    <div class="book-title">
+                                        {{ loan.title }}
+                                    </div>
+
+                                    <span class="book-author">
+                                        {{ loan.author }}
+                                    </span>
+                                </td>
+
+                                <td class="date-cell">
+                                    {{ loan.issue_date or '—' }}
+                                </td>
+
+                                <td class="date-cell">
+                                    {{ loan.due_date or '—' }}
+                                </td>
+
+                                <td class="date-cell">
+                                    {% if loan.return_date %}
+                                        {{ loan.return_date }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="location-cell">
+
+                                    {% if loan.floor %}
+                                        <div>
+                                            <strong>Floor:</strong>
+                                            {{ loan.floor }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if loan.rack_number %}
+                                        <div>
+                                            <strong>Rack:</strong>
+                                            {{ loan.rack_number }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if loan.series_code %}
+                                        <div>
+                                            <strong>Series:</strong>
+                                            {{ loan.series_code }}
+                                        </div>
+                                    {% endif %}
+
+                                    {% if not loan.floor and not loan.rack_number and not loan.series_code %}
+                                        Not specified
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {% if loan.status == 'Overdue' %}
+
+                                        <span class="status overdue">
+                                            Overdue
+                                        </span>
+
+                                        {% if loan.days_overdue %}
+                                            <span class="late-note">
+                                                {{ loan.days_overdue }} days late
+                                            </span>
+                                        {% endif %}
+
+                                    {% elif loan.status == 'Returned' %}
+
+                                        <span class="status returned">
+                                            Returned
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="status borrowed">
+                                            Borrowed
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-state">
+
+                    <div class="empty-icon" aria-hidden="true">B</div>
+
+                    <h3>No borrowing history yet</h3>
+
+                    <p>
+                        You haven't borrowed any books yet.
+                    </p>
+
+                    <p>
+                        Explore the catalogue to find your next book
+                        and start building your reading history.
+                    </p>
+
+                    <a class="button" href="{{ url_for('books') }}">
+                        Browse Books →
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+</main>
+
+<footer>
+    <div class="footer-inner">
+        <span>© 2026 Central Library</span>
+        <span>A place for learning and discovery.</span>
+    </div>
+</footer>
+
+</body>
+</html>

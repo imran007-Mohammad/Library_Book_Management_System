@@ -1,13 +1,606 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Books | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
-<aside><a class="logo" href="index.html"><i></i>Central Library</a>
-<a class="nav" href="dashboard.html">Dashboard</a><a class="nav on" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
-<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
-<h1>Books</h1><p class="sub">Search and manage the catalogue.</p>
-<div class="panel"><form class="bar" method="get" action="/books">
-<input type="search" name="q" value="{{ q }}" placeholder="Search title, author or ISBN" aria-label="Search books">
-<select name="category" aria-label="Category"><option value="">All categories</option>{% for c in categories %}<option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>{% endfor %}</select><button class="btn" type="submit" style="margin:0;width:auto">Search</button>
-{% if session.role == 'admin' %}<a class="btn" href="/add_book" style="margin:0;width:auto">Add book</a>{% endif %}</form>
-<table><tr><th>ISBN</th><th>Title</th><th>Author</th><th>Copies</th><th>Status</th><th></th></tr>
-{% for b in books %}<tr><td>{{ b.isbn }}</td><td>{{ b.title }}</td><td>{{ b.author }}</td><td>{{ b.copies_available }} / {{ b.total_copies }}</td><td>{% if b.copies_available > 0 %}<span class="tag">Available</span>{% else %}<span class="tag out">Borrowed</span>{% endif %}</td><td></td></tr>
-{% else %}<tr><td colspan="6">No books found.</td></tr>{% endfor %}</table></div>
-</main></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Books | Central Library</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --teal: #1e6f6b;
+            --gold: #e0a526;
+            --muted: #55627a;
+            --line: #cfd8e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            margin: 0;
+        }
+
+        /* ========================================
+           HEADER AND NAVIGATION
+        ======================================== */
+
+        header {
+            display: block;
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--paper);
+            border-bottom: 1px solid var(--line);
+        }
+
+        header .wrap.nav {
+            width: 100%;
+            max-width: 1250px;
+            min-height: 76px;
+            height: auto;
+            margin: 0 auto;
+            padding: 12px 22px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        header .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+
+            color: var(--ink);
+            font-family: "Trebuchet MS", sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            line-height: 1.3;
+
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        header .logo:hover {
+            color: var(--teal);
+            text-decoration: none;
+        }
+
+        header .logo i {
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            flex-shrink: 0;
+
+            background: var(--teal);
+            border-radius: 4px 4px 4px 0;
+            box-shadow: inset -8px 0 0 var(--gold);
+        }
+
+        header nav {
+            display: block;
+            width: auto;
+            margin-left: auto;
+        }
+
+        header nav ul {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 8px;
+
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        header nav ul li {
+            display: block;
+            margin: 0;
+            padding: 0;
+        }
+
+        header nav ul li a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 10px 12px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+
+            color: var(--ink);
+            background: transparent;
+
+            font-family: "Trebuchet MS", sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            line-height: 1.4;
+
+            text-decoration: none;
+            white-space: nowrap;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        header nav ul li a:visited {
+            color: var(--ink);
+        }
+
+        header nav ul li a:hover {
+            color: var(--teal);
+            background: #dce8e8;
+            border-color: #c5d9d7;
+            text-decoration: none;
+        }
+
+        header nav ul li a:focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        @media (max-width: 900px) {
+            header .wrap.nav {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 12px;
+                padding-top: 16px;
+                padding-bottom: 16px;
+            }
+
+            header nav {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            header nav ul {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header .wrap.nav {
+                padding: 14px;
+            }
+
+            header nav ul {
+                gap: 4px;
+            }
+
+            header nav ul li a {
+                padding: 8px;
+                font-size: 0.84rem;
+            }
+        }
+
+        /* ========================================
+           BOOK CATALOGUE
+        ======================================== */
+
+        .catalogue {
+            width: 100%;
+            max-width: 1250px;
+            margin: 30px auto;
+            padding: 0 22px;
+        }
+
+        .catalogue h1 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+        }
+
+        .description {
+            color: var(--muted);
+            margin: 0 0 24px;
+        }
+
+        /* Search and category filter */
+
+        .search-form {
+            display: grid;
+            grid-template-columns:
+                minmax(180px, 1fr)
+                minmax(160px, 230px)
+                auto;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .search-form input,
+        .search-form select {
+            width: 100%;
+            min-width: 0;
+            min-height: 46px;
+            padding: 12px;
+
+            border: 1px solid var(--line);
+            border-radius: 6px;
+
+            color: var(--ink);
+            background: var(--card);
+            font: inherit;
+        }
+
+        .search-form input:focus,
+        .search-form select:focus {
+            outline: 3px solid var(--gold);
+            outline-offset: 2px;
+            border-color: var(--teal);
+        }
+
+        .search-form button {
+            min-height: 46px;
+            padding: 12px 22px;
+            border: 2px solid var(--ink);
+            border-radius: 6px;
+
+            background: var(--ink);
+            color: white;
+
+            font-family: "Trebuchet MS", sans-serif;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .search-form button:hover {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .results-count {
+            margin: 0 0 16px;
+            color: var(--muted);
+        }
+
+        /* Table */
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .book-table {
+            width: 100%;
+            min-width: 1100px;
+            border-collapse: collapse;
+            background: var(--card);
+        }
+
+        .book-table th,
+        .book-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid #e1e6ed;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .book-table th {
+            background: var(--ink);
+            color: #ffffff;
+            font-size: 0.92rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .book-table tbody tr {
+            background: var(--card);
+        }
+
+        .book-table tbody tr:hover {
+            background: #f1f7f7;
+        }
+
+        .book-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .book-title {
+            min-width: 190px;
+            color: var(--ink);
+            font-weight: bold;
+        }
+
+        .book-isbn {
+            white-space: nowrap;
+            font-size: 0.9rem;
+        }
+
+        .location {
+            min-width: 130px;
+            line-height: 1.7;
+        }
+
+        .series {
+            white-space: nowrap;
+            font-weight: 600;
+            color: var(--teal);
+        }
+
+        /* Availability */
+
+        .availability {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .available {
+            background: #dff1ea;
+            color: #13584f;
+        }
+
+        .unavailable {
+            background: #f8e1db;
+            color: #8b2f1b;
+        }
+
+        /* Messages and empty results */
+
+        .empty-state {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 35px 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .empty-state h2 {
+            margin-bottom: 10px;
+            color: var(--ink);
+        }
+
+        .flash-message {
+            margin-bottom: 12px;
+            padding: 10px 14px;
+            background: #fbefc9;
+            border-left: 5px solid var(--gold);
+            border-radius: 4px;
+            color: var(--ink);
+        }
+
+        @media (max-width: 700px) {
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+
+            .catalogue {
+                padding: 0 14px;
+                margin-top: 22px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="wrap nav">
+
+        <a class="logo" href="{{ url_for('home') }}">
+            <i aria-hidden="true"></i>
+            Central Library
+        </a>
+
+        <nav aria-label="Main navigation">
+            <ul>
+
+                {% if session.get('role') == 'librarian' %}
+                    <li>
+                        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                {% endif %}
+
+                <li>
+                    <a href="{{ url_for('books') }}">Books</a>
+                </li>
+
+                {% if session.get('role') == 'student' %}
+                    <li>
+                        <a href="{{ url_for('student_dashboard') }}">
+                            My Borrows
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% if session.get('role') == 'librarian' %}
+                    <li>
+                        <a href="{{ url_for('add_book') }}">Add Book</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('issue_return') }}">
+                            Issue / Return
+                        </a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('members') }}">Members</a>
+                    </li>
+                {% endif %}
+
+                <li>
+                    <a href="{{ url_for('logout') }}">Log Out</a>
+                </li>
+
+            </ul>
+        </nav>
+
+    </div>
+</header>
+
+<main class="catalogue">
+
+    <h1>Books Catalogue</h1>
+
+    <p class="description">
+        Search books and find their availability, floor, rack number,
+        and series code.
+    </p>
+
+    {% for message in get_flashed_messages() | unique %}
+        <div class="flash-message">{{ message }}</div>
+    {% endfor %}
+
+    <form class="search-form"
+          action="{{ url_for('books') }}"
+          method="GET">
+
+        <input
+            type="search"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search title, author, ISBN, floor, rack or series"
+            aria-label="Search books">
+
+        <select name="category" aria-label="Filter by category">
+
+            <option value="">All categories</option>
+
+            {% for item in categories %}
+                <option value="{{ item }}"
+                    {% if category == item %}selected{% endif %}>
+                    {{ item }}
+                </option>
+            {% endfor %}
+
+        </select>
+
+        <button type="submit">Search</button>
+
+    </form>
+
+    <p class="results-count">
+        Books found: <strong>{{ books | length }}</strong>
+    </p>
+
+    {% if books %}
+
+        <div class="table-container">
+
+            <table class="book-table">
+
+                <thead>
+                    <tr>
+                        <th>ISBN</th>
+                        <th>Book Title</th>
+                        <th>Author</th>
+                        <th>Category</th>
+                        <th>Copies Available</th>
+                        <th>Floor</th>
+                        <th>Rack Number</th>
+                        <th>Series Code</th>
+                        <th>Status</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for book in books %}
+                        <tr>
+
+                            <td class="book-isbn">
+                                {{ book.isbn }}
+                            </td>
+
+                            <td class="book-title">
+                                {{ book.title }}
+                            </td>
+
+                            <td>
+                                {{ book.author }}
+                            </td>
+
+                            <td>
+                                {{ book.category or 'General' }}
+                            </td>
+
+                            <td>
+                                {{ book.copies_available }}
+                                /
+                                {{ book.total_copies }}
+                            </td>
+
+                            <td class="location">
+                                {{ book.floor or 'Not assigned' }}
+                            </td>
+
+                            <td>
+                                {{ book.rack_number or 'Not assigned' }}
+                            </td>
+
+                            <td class="series">
+                                {{ book.series_code or 'Not assigned' }}
+                            </td>
+
+                            <td>
+                                {% if book.copies_available > 0 %}
+                                    <span class="availability available">
+                                        Available
+                                    </span>
+                                {% else %}
+                                    <span class="availability unavailable">
+                                        Unavailable
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if book.review_count %}
+                                    {{ '%.1f'|format(book.average_rating) }}
+                                    / 5
+                                    ({{ book.review_count }})
+                                {% else %}
+                                    No reviews
+                                {% endif %}
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    {% else %}
+
+        <div class="empty-state">
+            <h2>No books found</h2>
+            <p>Try another title, author, category, or location.</p>
+        </div>
+
+    {% endif %}
+
+</main>
+
+</body>
+</html>

@@ -1,15 +1,324 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
-<aside><a class="logo" href="index.html"><i></i>Central Library</a>
-<a class="nav on" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
-<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
-<h1>Dashboard</h1><p class="sub">Today at a glance.</p>
-<div class="stats">
-<div class="stat" style="--c:var(--teal)"><b>{{ stats.total_books }}</b><span>Total books</span></div>
-<div class="stat" style="--c:var(--gold)"><b>{{ stats.borrowed }}</b><span>Currently borrowed</span></div>
-<div class="stat" style="--c:var(--brick)"><b>{{ stats.overdue }}</b><span>Overdue</span></div>
-<div class="stat" style="--c:var(--ink)"><b>{{ stats.members }}</b><span>Members</span></div></div>
-<div class="panel"><h2>Recent activity</h2>
-<table><tr><th>Member</th><th>Book</th><th>Action</th><th>Date</th></tr>
-{% for r in recent %}<tr><td>{{ r.borrower_name }}</td><td>{{ r.title }}</td><td><span class="tag{% if r.status == 'Overdue' %} late{% endif %}">{{ r.status }}</span></td><td>{{ (r.return_date or r.issue_date).strftime('%d %b %Y') }}</td></tr>
-{% else %}<tr><td colspan="4">No activity yet.</td></tr>{% endfor %}</table></div>
-</main></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard | Central Library</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='library_nav.css') }}">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --muted: #55627a;
+            --line: #cfd8e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Dashboard content */
+
+        .dashboard-content {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 32px 22px;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: clamp(1.9rem, 4vw, 2.5rem);
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        /* Notifications */
+
+        .flash-message {
+            margin-bottom: 12px;
+            padding: 11px 14px;
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-left: 4px solid #16213a;
+            border-radius: 6px;
+            color: var(--ink);
+        }
+
+        /* Statistics */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            min-width: 0;
+            padding: 24px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .stat b {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--ink);
+            font-size: clamp(1.8rem, 3vw, 2.4rem);
+            font-weight: 800;
+            line-height: 1.2;
+            overflow-wrap: anywhere;
+        }
+
+        .stat span {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        /* Recent activity */
+
+        .panel {
+            min-width: 0;
+            padding: 24px;
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .panel h2 {
+            margin: 0 0 22px;
+            color: var(--ink);
+            font-size: 1.4rem;
+        }
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .activity-table {
+            width: 100%;
+            min-width: 650px;
+            border-collapse: collapse;
+            background: var(--card);
+        }
+
+        .activity-table th,
+        .activity-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid #e1e6ed;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .activity-table th {
+            background: var(--ink);
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .activity-table tbody tr:hover {
+            background: #f1f3f6;
+        }
+
+        .activity-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status labels */
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #e7edf3;
+            color: var(--ink);
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .tag.late {
+            background: #f8e1db;
+            color: #8b2f1b;
+        }
+
+        /* Empty activity */
+
+        .empty-activity {
+            padding: 26px 16px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Responsive layout */
+
+        @media (max-width: 850px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 550px) {
+            .dashboard-content {
+                padding: 24px 14px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .stat {
+                padding: 20px;
+            }
+
+            .panel {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Shared navigation used by the other librarian pages -->
+    {% include '_navigation.html' %}
+
+    <main class="dashboard-content">
+
+        <!-- Page heading -->
+
+        <div class="page-heading">
+            <h1>Dashboard</h1>
+            <p>Today at a glance.</p>
+        </div>
+
+        <!-- Flash messages -->
+
+        {% for message in get_flashed_messages() | unique %}
+            <div class="flash-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <!-- Dashboard statistics -->
+
+        <section class="stats" aria-label="Library statistics">
+
+            <div class="stat">
+                <b>{{ stats.total_books }}</b>
+                <span>Total books</span>
+            </div>
+
+            <div class="stat">
+                <b>{{ stats.borrowed }}</b>
+                <span>Currently borrowed</span>
+            </div>
+
+            <div class="stat">
+                <b>{{ stats.overdue }}</b>
+                <span>Overdue</span>
+            </div>
+
+            <div class="stat">
+                <b>{{ stats.members }}</b>
+                <span>Members</span>
+            </div>
+
+        </section>
+
+        <!-- Recent borrowing activity -->
+
+        <section class="panel">
+
+            <h2>Recent Activity</h2>
+
+            <div class="table-container">
+
+                <table class="activity-table">
+
+                    <thead>
+                        <tr>
+                            <th>Member</th>
+                            <th>Book</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for r in recent %}
+
+                            <tr>
+                                <td>
+                                    {{ r.borrower_name }}
+                                </td>
+
+                                <td>
+                                    {{ r.title }}
+                                </td>
+
+                                <td>
+                                    <span class="tag{% if r.status == 'Overdue' %} late{% endif %}">
+                                        {{ r.status }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    {{ (r.return_date or r.issue_date).strftime('%d %b %Y') }}
+                                </td>
+                            </tr>
+
+                        {% else %}
+
+                            <tr>
+                                <td colspan="4" class="empty-activity">
+                                    No borrowing activity yet.
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>
