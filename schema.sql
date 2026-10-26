@@ -111,3 +111,17 @@ CREATE TABLE reviews (
 -- Intentionally no sample users, students, books, loans, or reviews.
 -- Create the first librarian account securely through a one-time setup script
 -- that hashes the password using Werkzeug; do not store a plain-text password.
+-- Stores hashed OTPs for password resets.
+CREATE TABLE IF NOT EXISTS password_reset_otps (
+    reset_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    attempts INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_password_reset_otps_user
+        FOREIGN KEY (user_id) REFERENCES users(user_id)
+        ON DELETE CASCADE,
+    INDEX idx_password_reset_otps_user (user_id)
+);
+

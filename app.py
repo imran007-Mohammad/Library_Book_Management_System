@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import json
 import secrets
@@ -31,7 +31,9 @@ app.secret_key = os.environ["SECRET_KEY"]
 
 LOAN_DAYS = int(os.getenv("LOAN_DAYS", 30))       
 FINE_PER_DAY = int(os.getenv("FINE_PER_DAY", 30))  
-MAX_LOANS = int(os.getenv("MAX_LOANS", 3))        
+MAX_LOANS = int(os.getenv("MAX_LOANS", 3))
+OTP_EXPIRY_MINUTES = 10
+MAX_OTP_ATTEMPTS = 5        
 
 
 def get_db():
@@ -799,7 +801,7 @@ def return_book():
                 fine = max((returned - loan["due_date"]).days, 0) * FINE_PER_DAY
                 message = f"Returned '{loan['title']}'."
                 if fine:
-                    message += f" Fine due: ₹{fine}."
+                    message += f" Fine due: â‚¹{fine}."
                 flash(message)
             else:
                 db.rollback()
@@ -861,8 +863,387 @@ def analytics():
 
 
 # ============================================================
+# OUTLOOK EMAIL SENDING THROUGH MICROSOFT GRAPH
+# ============================================================
+
+def send_outlook_email(recipient, subject, body):
+    """Send mail through Microsoft Graph using application credentials."""
+    tenant_id = os.getenv("MS_TENANT_ID", "")
+    client_id = os.getenv("MS_CLIENT_ID", "")
+    client_secret = os.getenv("MS_CLIENT_SECRET", "")
+    sender_email = os.getenv("MS_SENDER_EMAIL", "")
+
+    if not all([tenant_id, client_id, client_secret, sender_email]):
+        raise RuntimeError("Outlook email delivery is not configured.")
+
+    token_url = (
+        "https://login.microsoftonline.com/"
+        f"{urllib.parse.quote(tenant_id, safe='')}/oauth2/v2.0/token"
+    )
+    token_data = urllib.parse.urlencode({
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "scope": "https://graph.microsoft.com/.default",
+        "grant_type": "client_credentials",
+    }).encode("utf-8")
+
+    token_request = urllib.request.Request(
+        token_url,
+        data=token_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(token_request, timeout=20) as response:
+            token_result = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, urllib.error.HTTPError):
+        app.logger.exception("Outlook authentication failed.")
+        raise RuntimeError("Could not authenticate with Outlook.") from None
+
+    access_token = token_result.get("access_token")
+    if not access_token:
+        raise RuntimeError("Outlook did not return an access token.")
+
+    send_url = (
+        "https://graph.microsoft.com/v1.0/users/"
+        f"{urllib.parse.quote(sender_email, safe='')}/sendMail"
+    )
+    email_data = {
+        "message": {
+            "subject": subject,
+            "body": {"contentType": "Text", "content": body},
+            "toRecipients": [
+                {"emailAddress": {"address": recipient}}
+            ],
+        },
+        "saveToSentItems": True,
+    }
+
+    send_request = urllib.request.Request(
+        send_url,
+        data=json.dumps(email_data).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(send_request, timeout=20) as response:
+            if response.status not in (200, 202):
+                raise RuntimeError("Outlook did not accept the email.")
+    except (urllib.error.URLError, urllib.error.HTTPError):
+        app.logger.exception("Outlook email delivery failed.")
+        raise RuntimeError("Outlook could not send the email.") from None
+
+
+# ============================================================
+# FORGOT PASSWORD: EMAIL OTP
+# ============================================================
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+@app.route("/forgot_password", methods=["GET", "POST"])
+def forgot_password():
+    role = get_selected_role()
+
+    if role is None:
+        flash("Choose Student or Librarian first.")
+        return redirect(url_for("home"))
+
+    step = request.args.get("step", "email")
+    email = request.args.get("email", "").strip().lower()
+
+    if request.method == "GET":
+        return render_template(
+            "forgot_password.html",
+            selected_role=role,
+            email=email,
+            step=step,
+        )
+
+    action = request.form.get("action", "send_otp")
+    email = request.form.get("email", "").strip().lower()
+
+    if action == "send_otp":
+        if not email.endswith("@mbu.asia"):
+            flash("Enter your registered @mbu.asia email.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        outlook_ready = all([
+            os.getenv("MS_TENANT_ID"),
+            os.getenv("MS_CLIENT_ID"),
+            os.getenv("MS_CLIENT_SECRET"),
+            os.getenv("MS_SENDER_EMAIL"),
+        ])
+        if not outlook_ready:
+            flash(
+                "Outlook OTP delivery is not configured yet. "
+                "Please complete the email setup."
+            )
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        user = query(
+            """
+            SELECT user_id, email
+            FROM users
+            WHERE LOWER(email) = %s AND role = %s
+            """,
+            (email, role),
+            one=True,
+        )
+
+        if not user:
+            flash(
+                "If the email belongs to this account type, "
+                "a reset code can be sent."
+            )
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        otp = f"{secrets.randbelow(1_000_000):06d}"
+        expiry = datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        db = get_db()
+        cur = db.cursor()
+
+        try:
+            cur.execute(
+                "DELETE FROM password_reset_otps WHERE user_id = %s",
+                (user["user_id"],),
+            )
+            cur.execute(
+                """
+                INSERT INTO password_reset_otps
+                    (user_id, otp_hash, expires_at, attempts)
+                VALUES (%s, %s, %s, 0)
+                """,
+                (user["user_id"], generate_password_hash(otp), expiry),
+            )
+            db.commit()
+        except mysql.connector.Error:
+            db.rollback()
+            app.logger.exception("Creating the reset OTP failed.")
+            flash("Could not create a reset code.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+        finally:
+            cur.close()
+
+        try:
+            send_outlook_email(
+                email,
+                "Central Library - Password Reset Code",
+                (
+                    f"Your password reset code is: {otp}\n\n"
+                    f"It expires in {OTP_EXPIRY_MINUTES} minutes.\n"
+                    "If you did not request it, ignore this email."
+                ),
+            )
+        except RuntimeError:
+            execute(
+                "DELETE FROM password_reset_otps WHERE user_id = %s",
+                (user["user_id"],),
+            )
+            app.logger.exception("Sending the reset OTP failed.")
+            flash("OTP email could not be sent. Check Outlook configuration.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        flash("An OTP was sent if the account exists.")
+        return redirect(
+            url_for(
+                "forgot_password",
+                role=role,
+                step="verify",
+                email=email,
+            )
+        )
+
+    if action == "reset_password":
+        otp = request.form.get("otp", "").strip()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not re.fullmatch(r"\d{6}", otp):
+            flash("Enter the six-digit OTP.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="verify",
+            )
+        if len(password) < 8:
+            flash("New password must contain at least 8 characters.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="verify",
+            )
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="verify",
+            )
+
+        user = query(
+            """
+            SELECT user_id
+            FROM users
+            WHERE LOWER(email) = %s AND role = %s
+            """,
+            (email, role),
+            one=True,
+        )
+        if not user:
+            flash("The account could not be verified.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        reset = query(
+            """
+            SELECT reset_id, otp_hash, expires_at, attempts
+            FROM password_reset_otps
+            WHERE user_id = %s
+            ORDER BY reset_id DESC
+            LIMIT 1
+            """,
+            (user["user_id"],),
+            one=True,
+        )
+        if not reset:
+            flash("No active reset code. Request a new OTP.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        if reset["attempts"] >= MAX_OTP_ATTEMPTS:
+            execute(
+                "DELETE FROM password_reset_otps WHERE user_id = %s",
+                (user["user_id"],),
+            )
+            flash("Too many attempts. Request a new OTP.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        expiry_value = reset["expires_at"]
+        if getattr(expiry_value, "tzinfo", None) is not None:
+            expiry_value = expiry_value.replace(tzinfo=None)
+
+        if expiry_value < datetime.now():
+            execute(
+                "DELETE FROM password_reset_otps WHERE user_id = %s",
+                (user["user_id"],),
+            )
+            flash("OTP expired. Request a new one.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="email",
+            )
+
+        if not check_password_hash(reset["otp_hash"], otp):
+            execute(
+                """
+                UPDATE password_reset_otps
+                SET attempts = attempts + 1
+                WHERE reset_id = %s
+                """,
+                (reset["reset_id"],),
+            )
+            flash("Incorrect OTP.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="verify",
+            )
+
+        db = get_db()
+        cur = db.cursor()
+        try:
+            cur.execute(
+                """
+                UPDATE users
+                SET password_hash = %s
+                WHERE user_id = %s AND role = %s
+                """,
+                (generate_password_hash(password), user["user_id"], role),
+            )
+            cur.execute(
+                "DELETE FROM password_reset_otps WHERE user_id = %s",
+                (user["user_id"],),
+            )
+            db.commit()
+        except mysql.connector.Error:
+            db.rollback()
+            app.logger.exception("Password reset failed.")
+            flash("Could not reset the password.")
+            return render_template(
+                "forgot_password.html",
+                selected_role=role,
+                email=email,
+                step="verify",
+            )
+        finally:
+            cur.close()
+
+        flash("Password changed successfully. You can now log in.")
+        return redirect(url_for("login", role=role))
+
+    flash("Invalid password-reset request.")
+    return render_template(
+        "forgot_password.html",
+        selected_role=role,
+        email=email,
+        step="email",
+    )
+
+
+
+
+# ============================================================
 # START APPLICATION
 # ============================================================
 
 if __name__ == "__main__":
     app.run(debug=True)   
+
