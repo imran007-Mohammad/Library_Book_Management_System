@@ -1,17 +1,453 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Issue and Return | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head><body><div class="app">
-<aside><a class="logo" href="index.html"><i></i>Central Library</a>
-<a class="nav" href="dashboard.html">Dashboard</a><a class="nav" href="books.html">Books</a><a class="nav" href="add_book.html">Add book</a><a class="nav on" href="issue_return.html">Issue / Return</a><a class="nav" href="members.html">Members</a><a class="nav" href="/logout">Log out</a></aside>
-<main>{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}
-<h1>Issue / Return</h1><p class="sub">Loan period is 14 days. Fine is ₹2 per day after the due date.</p>
-<div class="two">
-<div class="panel"><h2>Issue a book</h2><form action="/issue" method="POST">
-<label for="m1">Student ID</label><input id="m1" name="student_id" required>
-<label for="b1">Book ISBN</label><input id="b1" name="isbn" required>
-<label for="d1">Due date</label><input id="d1" name="due" type="date" required>
-<button class="btn" type="submit">Issue book</button></form></div>
-<div class="panel"><h2>Return a book</h2><form action="/return" method="POST">
-<label for="m2">Student ID</label><input id="m2" name="student_id" required>
-<label for="b2">Book ISBN</label><input id="b2" name="isbn" required>
-<label for="d2">Returned on</label><input id="d2" name="returned" type="date" required>
-<button class="btn red" type="submit">Return book</button></form></div></div>
-</main></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Issue / Return | Central Library</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='library_nav.css') }}">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --muted: #55627a;
+            --line: #cfd8e3;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--paper);
+            color: var(--ink);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* ========================================
+           PAGE LAYOUT
+        ======================================== */
+
+        .page-content {
+            width: 100%;
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 32px 22px;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .page-heading h1 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: clamp(1.9rem, 4vw, 2.5rem);
+        }
+
+        .page-heading p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        /* ========================================
+           FLASH MESSAGES
+        ======================================== */
+
+        .flash-message {
+            margin-bottom: 14px;
+            padding: 11px 14px;
+
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-left: 4px solid var(--ink);
+            border-radius: 6px;
+
+            color: var(--ink);
+        }
+
+        /* ========================================
+           ISSUE AND RETURN CARDS
+        ======================================== */
+
+        .two {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .panel {
+            min-width: 0;
+            padding: 30px;
+
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+        }
+
+        .panel h2 {
+            margin: 0 0 8px;
+            color: var(--ink);
+            font-size: 1.5rem;
+        }
+
+        .panel-description {
+            margin: 0 0 26px;
+            color: var(--muted);
+            font-size: 0.94rem;
+        }
+
+        /* ========================================
+           FORM
+        ======================================== */
+
+        .loan-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            min-width: 0;
+        }
+
+        .form-field label {
+            color: var(--ink);
+            font-size: 0.94rem;
+            font-weight: 700;
+        }
+
+        .form-field input {
+            width: 100%;
+            min-width: 0;
+            min-height: 48px;
+            padding: 12px 14px;
+
+            background: #ffffff;
+            color: var(--ink);
+
+            border: 1px solid var(--line);
+            border-radius: 6px;
+
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.96rem;
+        }
+
+        .form-field input::placeholder {
+            color: #8791a2;
+        }
+
+        .form-field input:focus {
+            outline: 2px solid var(--ink);
+            outline-offset: 2px;
+            border-color: var(--ink);
+        }
+
+        .field-help {
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        /* ========================================
+           BUTTONS
+        ======================================== */
+
+        .form-actions {
+            margin-top: 8px;
+        }
+
+        .action-button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+
+            width: 100%;
+            min-height: 48px;
+            padding: 12px 20px;
+
+            background: var(--ink);
+            color: #ffffff;
+
+            border: 1px solid var(--ink);
+            border-radius: 6px;
+
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.96rem;
+            font-weight: 700;
+
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .action-button:hover {
+            background: #303b53;
+            border-color: #303b53;
+        }
+
+        .action-button:focus-visible {
+            outline: 3px solid var(--ink);
+            outline-offset: 3px;
+        }
+
+        /* ========================================
+           INFORMATION NOTE
+        ======================================== */
+
+        .info-note {
+            margin-top: 24px;
+            padding: 16px 18px;
+
+            background: #ffffff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .info-note strong {
+            color: var(--ink);
+        }
+
+        /* ========================================
+           RESPONSIVE
+        ======================================== */
+
+        @media (max-width: 800px) {
+            .two {
+                grid-template-columns: 1fr;
+                gap: 18px;
+            }
+
+            .panel {
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .page-content {
+                padding: 24px 14px;
+            }
+
+            .panel {
+                padding: 20px 17px;
+            }
+
+            .panel h2 {
+                font-size: 1.35rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Shared navigation -->
+    {% include '_navigation.html' %}
+
+    <main class="page-content">
+
+        <!-- Page heading -->
+        <div class="page-heading">
+            <h1>Issue / Return</h1>
+
+            <p>
+                Manage book borrowing and returns from one place.
+                The standard loan period is 14 days, with a fine of
+                ₹2 per day after the due date.
+            </p>
+        </div>
+
+        <!-- Flash messages -->
+        {% for message in get_flashed_messages() | unique %}
+            <div class="flash-message">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        <div class="two">
+
+            <!-- ====================================
+                 ISSUE A BOOK
+            ===================================== -->
+
+            <section class="panel">
+
+                <h2>Issue a Book</h2>
+
+                <p class="panel-description">
+                    Enter the student's roll number and the book's ISBN
+                    to record a new loan.
+                </p>
+
+                <form
+                    class="loan-form"
+                    action="{{ url_for('issue') }}"
+                    method="POST">
+
+                    <div class="form-field">
+                        <label for="m1">Student Roll Number</label>
+
+                        <input
+                            id="m1"
+                            name="student_id"
+                            type="text"
+                            placeholder="Example: 25102a010074"
+                            required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="b1">Book ISBN</label>
+
+                        <input
+                            id="b1"
+                            name="isbn"
+                            type="text"
+                            placeholder="Enter the book ISBN"
+                            required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="d1">Due Date</label>
+
+                        <input
+                            id="d1"
+                            name="due"
+                            type="date"
+                            required>
+
+                        <span class="field-help">
+                            Default due date: 14 days from today.
+                        </span>
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            class="action-button"
+                            type="submit">
+                            Issue Book
+                        </button>
+                    </div>
+
+                </form>
+
+            </section>
+
+            <!-- ====================================
+                 RETURN A BOOK
+            ===================================== -->
+
+            <section class="panel">
+
+                <h2>Return a Book</h2>
+
+                <p class="panel-description">
+                    Enter the student's roll number and the book's ISBN
+                    to record a returned book.
+                </p>
+
+                <form
+                    class="loan-form"
+                    action="{{ url_for('return_book') }}"
+                    method="POST">
+
+                    <div class="form-field">
+                        <label for="m2">Student Roll Number</label>
+
+                        <input
+                            id="m2"
+                            name="student_id"
+                            type="text"
+                            placeholder="Example: 25102a010074"
+                            required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="b2">Book ISBN</label>
+
+                        <input
+                            id="b2"
+                            name="isbn"
+                            type="text"
+                            placeholder="Enter the book ISBN"
+                            required>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="d2">Return Date</label>
+
+                        <input
+                            id="d2"
+                            name="returned"
+                            type="date"
+                            required>
+                    </div>
+
+                    <div class="form-actions">
+                        <button
+                            class="action-button"
+                            type="submit">
+                            Return Book
+                        </button>
+                    </div>
+
+                </form>
+
+            </section>
+
+        </div>
+
+        <!-- Library information -->
+        <div class="info-note">
+            <strong>Remember:</strong>
+            A student can borrow up to three books at a time.
+            The due date is recorded when a book is issued, and overdue
+            fines are calculated when the book is returned.
+        </div>
+
+    </main>
+
+    <script>
+        // Suggest a due date 14 days from today.
+        const dueInput = document.getElementById("d1");
+
+        if (dueInput) {
+            const dueDate = new Date();
+            dueDate.setDate(dueDate.getDate() + 14);
+
+            const year = dueDate.getFullYear();
+            const month = String(dueDate.getMonth() + 1).padStart(2, "0");
+            const day = String(dueDate.getDate()).padStart(2, "0");
+
+            dueInput.value = `${year}-${month}-${day}`;
+        }
+
+        // Suggest today's date for a return.
+        const returnInput = document.getElementById("d2");
+
+        if (returnInput) {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, "0");
+            const day = String(today.getDate()).padStart(2, "0");
+
+            returnInput.value = `${year}-${month}-${day}`;
+        }
+    </script>
+
+</body>
+</html>

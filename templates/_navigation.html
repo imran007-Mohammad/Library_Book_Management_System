@@ -1,0 +1,64 @@
+<header>
+    <div class="wrap nav">
+
+        <a class="logo" href="{{ url_for('home') }}">
+            <i aria-hidden="true"></i>
+            Central Library
+        </a>
+
+        <nav aria-label="Main navigation">
+            <ul>
+
+                {% if session.get('role') == 'librarian' %}
+
+                    <li>
+                        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('books') }}">Books</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('add_book') }}">Add Book</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('issue_return') }}">Issue / Return</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('members') }}">Members</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('logout') }}">Log Out</a>
+                    </li>
+
+                {% elif session.get('role') == 'student' %}
+
+                    <li>
+                        <a href="{{ url_for('books') }}">Books</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('student_dashboard') }}">My Borrows</a>
+                    </li>
+
+                    <li>
+                        <a href="{{ url_for('logout') }}">Log Out</a>
+                    </li>
+
+                {% else %}
+
+                    <li>
+                        <a href="{{ url_for('home') }}">Home</a>
+                    </li>
+
+                {% endif %}
+
+            </ul>
+        </nav>
+
+    </div>
+</header>

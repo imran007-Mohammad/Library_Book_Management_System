@@ -1,14 +1,780 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create account | Central Library</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
-<body><div class="auth"><div class="box">
-<a class="logo" href="index.html"><i></i>Central Library</a>
-<h1>Create account</h1><p>Members can borrow up to 3 books at a time.</p>
-{% for m in get_flashed_messages() %}<p style="background:#fbefc9;border-left:6px solid #e0a526;padding:10px 14px;margin:12px 0;color:#16213a">{{ m }}</p>{% endfor %}<form action="/register" method="POST">
-<label for="n">Full name</label><input id="n" name="name" required>
-<div class="row"><div><label for="sid">Student ID</label><input id="sid" name="student_id" required></div>
-<div><label for="dept">Department</label><select id="dept" name="dept"><option>CSE</option><option>AIML</option><option>ECE</option><option>Other</option></select></div></div>
-<label for="em">Email</label><input id="em" name="email" type="email" required>
-<label for="ph">Phone</label><input id="ph" name="phone" type="tel" pattern="[0-9]{10}" placeholder="10 digits">
-<label for="p1">Password</label><input id="p1" name="password" type="password" minlength="8" required autocomplete="new-password">
-<button class="btn" type="submit">Create account</button></form>
-<p class="note">Already a member? <a href="login.html">Log in</a></p>
-</div></div></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Create Account | Central Library</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700;800&family=Literata:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --ink: #16213a;
+            --paper: #eef2f6;
+            --card: #ffffff;
+            --teal: #1e6f6b;
+            --gold: #e0a526;
+            --muted: #55627a;
+            --line: #cfd8e3;
+            --head: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+            --body: 'Literata', Georgia, serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: var(--body);
+            color: var(--ink);
+            background: var(--paper);
+            line-height: 1.6;
+        }
+
+        a {
+            color: inherit;
+        }
+
+        input, select, button {
+            font: inherit;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        /* Header */
+
+        header {
+            background: var(--paper);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .nav {
+            max-width: 1120px;
+            min-height: 76px;
+            margin: 0 auto;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--head);
+            font-size: 1.3rem;
+            font-weight: 800;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .logo-icon {
+            width: 27px;
+            height: 27px;
+            display: block;
+            background: var(--teal);
+            border-radius: 4px 4px 4px 0;
+            box-shadow: inset -8px 0 0 var(--gold);
+        }
+
+        .home-link {
+            padding: 9px 15px;
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--ink);
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: .2s ease;
+        }
+
+        .home-link:hover {
+            background: var(--ink);
+            border-color: var(--ink);
+            color: white;
+        }
+
+        /* Main layout */
+
+        main {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 48px 24px 60px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: .85fr 1.15fr;
+            align-items: center;
+            gap: 65px;
+        }
+
+        /* Left introduction */
+
+        .intro {
+            max-width: 440px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 22px;
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .83rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .eyebrow::before {
+            content: "";
+            width: 28px;
+            height: 3px;
+            background: var(--gold);
+        }
+
+        .intro h1 {
+            margin-bottom: 22px;
+            font-family: var(--head);
+            font-size: clamp(2.6rem, 4.5vw, 3.8rem);
+            font-weight: 800;
+            letter-spacing: -.04em;
+            line-height: 1.08;
+        }
+
+        .intro h1 span {
+            color: var(--teal);
+        }
+
+        .intro > p {
+            max-width: 43ch;
+            margin-bottom: 30px;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .benefits {
+            display: grid;
+            gap: 19px;
+            margin-top: 30px;
+        }
+
+        .benefit {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .benefit-icon {
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: white;
+            color: var(--teal);
+            font-family: var(--head);
+            font-weight: 800;
+        }
+
+        .benefit h3 {
+            margin-bottom: 3px;
+            font-family: var(--head);
+            font-size: 1rem;
+        }
+
+        .benefit p {
+            color: var(--muted);
+            font-size: .9rem;
+        }
+
+        /* Registration card */
+
+        .register-card {
+            width: 100%;
+            padding: 34px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: var(--card);
+            box-shadow: 0 12px 34px rgba(22, 33, 58, .05);
+        }
+
+        .card-top {
+            margin-bottom: 25px;
+        }
+
+        .role-badge {
+            display: inline-block;
+            margin-bottom: 14px;
+            padding: 5px 11px;
+            border: 1px solid #c5d9d7;
+            border-radius: 5px;
+            background: #e5f0ef;
+            color: var(--teal);
+            font-family: var(--head);
+            font-size: .79rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+        }
+
+        .card-top h2 {
+            margin-bottom: 7px;
+            font-family: var(--head);
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -.025em;
+        }
+
+        .card-top p {
+            color: var(--muted);
+            font-size: .93rem;
+        }
+
+        /* Flash messages */
+
+        .messages {
+            margin-bottom: 18px;
+        }
+
+        .message {
+            margin-bottom: 9px;
+            padding: 11px 13px;
+            border: 1px solid #e7c5bd;
+            border-radius: 6px;
+            background: #fcf0ed;
+            color: #873522;
+            font-size: .88rem;
+            overflow-wrap: anywhere;
+        }
+
+        /* Form fields */
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0 18px;
+        }
+
+        .form-group {
+            min-width: 0;
+            margin-bottom: 18px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 7px;
+            font-family: var(--head);
+            font-size: .9rem;
+            font-weight: 700;
+        }
+
+        .form-group input,
+        .form-group select {
+            display: block;
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: white;
+            color: var(--ink);
+            font-family: var(--body);
+            font-size: .9rem;
+            transition: border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .form-group input::placeholder {
+            color: #8993a4;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(30, 111, 107, .12);
+        }
+
+        .field-help {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: .78rem;
+        }
+
+        .password-help {
+            margin-bottom: 19px;
+            padding: 11px 13px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #f4f7fa;
+            color: var(--muted);
+            font-size: .82rem;
+        }
+
+        /* Create account button */
+
+        .submit-btn {
+            display: block;
+            width: 100%;
+            min-height: 51px;
+            padding: 13px 18px;
+            border: 2px solid var(--ink);
+            border-radius: 6px;
+            background: var(--ink);
+            color: white;
+            font-family: var(--head);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .2s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        /* Sign in link */
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: var(--muted);
+            font-size: .82rem;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: var(--line);
+        }
+
+        .login-note {
+            color: var(--muted);
+            text-align: center;
+            font-size: .9rem;
+        }
+
+        .login-link {
+            display: inline-block;
+            position: relative;
+            z-index: 2;
+            margin-left: 4px;
+            padding: 5px 8px;
+            color: var(--teal);
+            font-family: var(--head);
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .login-link:hover {
+            text-decoration: underline;
+        }
+
+        .back-note {
+            margin-top: 17px;
+            text-align: center;
+            font-size: .85rem;
+        }
+
+        .back-note a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .back-note a:hover {
+            color: var(--teal);
+        }
+
+        /* Footer */
+
+        footer {
+            padding: 22px 24px;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: .85rem;
+        }
+
+        .footer-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Responsive layout */
+
+        @media(max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+                gap: 34px;
+                max-width: 650px;
+                margin: 0 auto;
+            }
+
+            .intro {
+                max-width: 100%;
+            }
+
+            .intro h1 {
+                font-size: clamp(2.6rem, 6vw, 3.5rem);
+            }
+
+            .register-card {
+                padding: 30px;
+            }
+        }
+
+        @media(max-width: 520px) {
+            .nav {
+                min-height: 68px;
+                padding: 12px 17px;
+            }
+
+            .logo {
+                font-size: 1.1rem;
+            }
+
+            .home-link {
+                padding: 8px 11px;
+                font-size: .82rem;
+            }
+
+            main {
+                padding: 34px 16px 42px;
+            }
+
+            .intro h1 {
+                font-size: 2.55rem;
+            }
+
+            .intro > p {
+                font-size: .98rem;
+            }
+
+            .register-card {
+                padding: 23px 19px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .card-top h2 {
+                font-size: 1.65rem;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+            }
+        }
+
+        @media(prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div class="nav">
+        <a class="logo" href="{{ url_for('home') }}">
+            <span class="logo-icon" aria-hidden="true"></span>
+            Central Library
+        </a>
+
+        <a class="home-link" href="{{ url_for('home') }}">
+            ← Back to Home
+        </a>
+    </div>
+</header>
+
+<main>
+
+    {% set selected_role = selected_role|default(request.args.get('role', 'student')) %}
+
+    {% if selected_role not in ['student', 'librarian'] %}
+        {% set selected_role = 'student' %}
+    {% endif %}
+
+    <div class="layout">
+
+        <section class="intro">
+            <div class="eyebrow">Join the library</div>
+
+            <h1>
+                Make room<br>
+                for <span>new ideas.</span>
+            </h1>
+
+            <p>
+                Create your library account to explore books,
+                manage your borrowing activity and make the most
+                of your learning journey.
+            </p>
+
+            <div class="benefits">
+                <div class="benefit">
+                    <div class="benefit-icon" aria-hidden="true">01</div>
+                    <div>
+                        <h3>Discover new books</h3>
+                        <p>Explore books across different subjects.</p>
+                    </div>
+                </div>
+
+                <div class="benefit">
+                    <div class="benefit-icon" aria-hidden="true">02</div>
+                    <div>
+                        <h3>Keep track of borrowing</h3>
+                        <p>Manage your library activity in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="register-card" aria-labelledby="registerTitle">
+
+            <div class="card-top">
+                <span class="role-badge">
+                    {{ 'Student Account' if selected_role == 'student' else 'Librarian Account' }}
+                </span>
+
+                <h2 id="registerTitle">Create your account</h2>
+                <p>Enter your details below to get started.</p>
+            </div>
+
+            <div class="messages" aria-live="polite">
+                {% for message in get_flashed_messages() | unique %}
+                    <div class="message">{{ message }}</div>
+                {% endfor %}
+            </div>
+
+            <form
+                id="registerForm"
+                action="{{ url_for('register', role=selected_role) }}"
+                method="POST">
+
+                <input type="hidden" name="role" value="{{ selected_role }}">
+
+                <div class="form-grid">
+
+                    <div class="form-group full">
+                        <label for="name">Full Name *</label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            placeholder="Enter your full name"
+                            autocomplete="name"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        {% if selected_role == 'student' %}
+                            <label for="student_id">Student Roll Number *</label>
+                            <input
+                                type="text"
+                                id="student_id"
+                                name="student_id"
+                                placeholder="25102a010074"
+                                pattern="[0-9]{5}[a-zA-Z][0-9]{6}"
+                                title="Enter your college roll number, for example 25102a010074."
+                                autocomplete="username"
+                                required>
+                            <p class="field-help">Use your official student roll number.</p>
+                        {% else %}
+                            <label for="student_id">Librarian ID *</label>
+                            <input
+                                type="text"
+                                id="student_id"
+                                name="student_id"
+                                placeholder="MBU123456"
+                                pattern="[Mm][Bb][Uu][0-9]{6}"
+                                title="Enter a librarian ID such as MBU123456."
+                                autocomplete="username"
+                                required>
+                            <p class="field-help">Format: MBU followed by six digits.</p>
+                        {% endif %}
+                    </div>
+
+                    {% if selected_role == 'student' %}
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            placeholder="Enter phone number"
+                            autocomplete="tel"
+                            inputmode="tel">
+                        <p class="field-help">Optional</p>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group full">
+                        <label for="email">College Email *</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="Enter your @mbu.asia email"
+                            autocomplete="email"
+                            pattern=".+@mbu\.asia"
+                            title="Use your college email ending in @mbu.asia."
+                            required>
+                        <p class="field-help">
+                            {% if selected_role == 'student' %}
+                                Use your student roll number followed by @mbu.asia.
+                            {% else %}
+                                Use your college email ending in @mbu.asia.
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    {% if selected_role == 'student' %}
+                    <div class="form-group full">
+                        <label for="dept">Branch / Department *</label>
+                        <select id="dept" name="dept" required>
+                            <option value="">Select your branch</option>
+                            <option value="CSE">Computer Science and Engineering (CSE)</option>
+                            <option value="AIML">Artificial Intelligence and Machine Learning (AI &amp; ML)</option>
+                            <option value="AIDS">Artificial Intelligence and Data Science</option>
+                            <option value="ECE">Electronics and Communication Engineering (ECE)</option>
+                            <option value="EEE">Electrical and Electronics Engineering (EEE)</option>
+                            <option value="CIVIL">Civil Engineering</option>
+                            <option value="MECH">Mechanical Engineering</option>
+                            <option value="IT">Information Technology (IT)</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label for="password">Password *</label>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Create a password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password">Confirm Password *</label>
+                        <input
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Re-enter your password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required>
+                    </div>
+
+                </div>
+
+                <div class="password-help">
+                    Use at least 8 characters and enter the same password in both fields.
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    {{ 'Create Student Account →' if selected_role == 'student' else 'Create Librarian Account →' }}
+                </button>
+
+            </form>
+
+            <div class="divider">Already have an account?</div>
+
+            <p class="login-note">
+                Already registered?
+
+                <a
+                    class="login-link"
+                    href="/login?role={{ selected_role }}"
+                    onclick="window.location.href=this.href; return false;">
+                    Sign in →
+                </a>
+            </p>
+
+            <p class="back-note">
+                <a href="{{ url_for('home') }}">Back to Home</a>
+            </p>
+
+        </section>
+
+    </div>
+
+</main>
+
+<footer>
+    <div class="footer-inner">
+        <span>© 2026 Central Library</span>
+        <span>A place for learning and discovery.</span>
+    </div>
+</footer>
+
+<script>
+    const registrationForm = document.getElementById("registerForm");
+    const passwordField = document.getElementById("password");
+    const confirmPasswordField = document.getElementById("confirm_password");
+
+    registrationForm.addEventListener("submit", function(event) {
+        if (passwordField.value !== confirmPasswordField.value) {
+            event.preventDefault();
+
+            confirmPasswordField.setCustomValidity(
+                "Passwords do not match."
+            );
+
+            confirmPasswordField.reportValidity();
+        } else {
+            confirmPasswordField.setCustomValidity("");
+        }
+    });
+
+    confirmPasswordField.addEventListener("input", function() {
+        confirmPasswordField.setCustomValidity("");
+    });
+</script>
+
+</body>
+</html>
