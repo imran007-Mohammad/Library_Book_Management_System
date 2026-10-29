@@ -6,6 +6,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from dotenv import load_dotenv
+load_dotenv()
+
 from datetime import date, datetime, timedelta
 from functools import wraps
 
