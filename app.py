@@ -1,4 +1,4 @@
-﻿import os
+import os
 import re
 import json
 import secrets
@@ -26,6 +26,8 @@ from flask import (
     url_for,
 )
 from werkzeug.security import check_password_hash, generate_password_hash
+
+from analytics import generate_all
 
 load_dotenv()
 
@@ -81,10 +83,6 @@ def execute(sql, args=None):
         cur.close()
 
 
-# ============================================================
-# AUTHENTICATION AND ROLE PROTECTION
-# ============================================================
-
 def login_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
@@ -131,9 +129,6 @@ def get_selected_role():
     return role if role in ("student", "librarian") else None
 
 
-# ============================================================
-# HOME
-# ============================================================
 
 @app.route("/")
 @app.route("/index.html")
@@ -141,9 +136,6 @@ def home():
     return render_template("index.html")
 
 
-# ============================================================
-# STUDENT AND LIBRARIAN REGISTRATION
-# ============================================================
 
 @app.route("/register", methods=["GET", "POST"])
 @app.route("/register.html", methods=["GET", "POST"])
@@ -193,8 +185,6 @@ def register():
             return render_template("register.html", selected_role=role)
 
     else:
-        # Librarians use an ID in the format MBU123456.
-        # No additional registration code is required.
         if not re.fullmatch(r"MBU\d{6}", roll_no):
             flash("Enter a librarian ID such as MBU123456.")
             return render_template("register.html", selected_role=role)
@@ -260,7 +250,6 @@ def register():
 
         user_id = cur.lastrowid
 
-        # Only students need borrower records for issuing and My Borrows.
         if role == "student":
             cur.execute(
                 """
@@ -294,9 +283,6 @@ def register():
         cur.close()
 
 
-# ============================================================
-# STUDENT AND LIBRARIAN LOGIN
-# ============================================================
 
 @app.route("/login", methods=["GET", "POST"])
 @app.route("/login.html", methods=["GET", "POST"])
@@ -352,9 +338,6 @@ def login():
     return render_template("login.html", selected_role=role)
 
 
-# ============================================================
-# LOGOUT
-# ============================================================
 
 @app.route("/logout")
 def logout():
@@ -363,9 +346,6 @@ def logout():
     return redirect(url_for("home"))
 
 
-# ============================================================
-# LIBRARIAN DASHBOARD
-# ============================================================
 
 @app.route("/dashboard")
 @app.route("/dashboard.html")
@@ -404,9 +384,6 @@ def dashboard():
     return render_template("dashboard.html", stats=stats, recent=recent)
 
 
-# ============================================================
-# STUDENT DASHBOARD: MY BORROWS
-# ============================================================
 
 @app.route("/student_dashboard")
 @app.route("/student_dashboard.html")
@@ -484,14 +461,6 @@ def student_dashboard():
     )
 
 
-# ============================================================
-# BOOK CATALOGUE AND SEARCH
-# ============================================================
-
-# ============================================================
-# BOOK CATALOGUE AND SEARCH
-# ============================================================
-
 @app.route("/books")
 @app.route("/books.html")
 @login_required
@@ -518,7 +487,6 @@ def books():
 
     args = []
 
-    # Search by book details and location.
     if q:
         sql += """
             AND (
@@ -535,7 +503,6 @@ def books():
         search_term = f"%{q}%"
         args.extend([search_term] * 7)
 
-    # Filter by selected category.
     if category:
         sql += " AND bk.category = %s"
         args.append(category)
@@ -559,9 +526,6 @@ def books():
         category=category,
     )
 
-# ============================================================
-# ADD BOOK
-# ============================================================
 
 @app.route("/add_book", methods=["GET", "POST"])
 @app.route("/add_book.html", methods=["GET", "POST"])
@@ -615,9 +579,6 @@ def add_book():
     return render_template("add_book.html")
 
 
-# ============================================================
-# MEMBERS
-# ============================================================
 
 @app.route("/members")
 @app.route("/members.html")
@@ -804,7 +765,7 @@ def return_book():
                 fine = max((returned - loan["due_date"]).days, 0) * FINE_PER_DAY
                 message = f"Returned '{loan['title']}'."
                 if fine:
-                    message += f" Fine due: â‚¹{fine}."
+                    message += f" Fine due: ₹{fine}."
                 flash(message)
             else:
                 db.rollback()
@@ -865,9 +826,23 @@ def analytics():
     )
 
 
-# ============================================================
-# OUTLOOK EMAIL SENDING THROUGH MICROSOFT GRAPH
-# ============================================================
+
+@app.route("/analytics")
+@librarian_required
+def analytics_page():
+    books = query(
+        "SELECT book_id, title, category, total_copies, copies_available FROM books"
+    )
+    borrowers = query(
+        "SELECT borrower_id, borrower_name, roll_no, department FROM borrowers"
+    )
+    loans = query(
+        "SELECT loan_id, book_id, borrower_id, issue_date, due_date, return_date FROM loans"
+    )
+    stats, charts = generate_all(books, borrowers, loans, FINE_PER_DAY)
+    return render_template("analytics.html", stats=stats, charts=charts)
+
+
 
 def send_outlook_email(recipient, subject, body):
     """Send mail through Microsoft Graph using application credentials."""
@@ -942,9 +917,6 @@ def send_outlook_email(recipient, subject, body):
         raise RuntimeError("Outlook could not send the email.") from None
 
 
-# ============================================================
-# FORGOT PASSWORD: EMAIL OTP
-# ============================================================
 
 @app.route("/forgot-password", methods=["GET", "POST"])
 @app.route("/forgot_password", methods=["GET", "POST"])
@@ -1242,11 +1214,5 @@ def forgot_password():
 
 
 
-
-# ============================================================
-# START APPLICATION
-# ============================================================
-
 if __name__ == "__main__":
-    app.run(debug=True)   
-
+    app.run(debug=True)
