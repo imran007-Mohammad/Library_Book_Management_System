@@ -944,14 +944,29 @@ footer .wrap {
                 <li><a href="#how">How it works</a></li>
                 <li><a href="#visit">Visit</a></li>
 
-                <li>
-                    <button
-                        type="button"
-                        class="btn btn-main"
-                        onclick="openRoleDialog('loginOptions')">
-                        Log in
-                    </button>
-                </li>
+                {% if session.get('role') == 'librarian' %}
+
+                    <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                    <li><a href="{{ url_for('analytics_page') }}">Analytics</a></li>
+
+                    <li>
+                        <a class="btn btn-main" href="{{ url_for('logout') }}">
+                            Log out
+                        </a>
+                    </li>
+
+                {% else %}
+
+                    <li>
+                        <button
+                            type="button"
+                            class="btn btn-main"
+                            onclick="openRoleDialog('loginOptions')">
+                            Log in
+                        </button>
+                    </li>
+
+                {% endif %}
             </ul>
         </nav>
 
