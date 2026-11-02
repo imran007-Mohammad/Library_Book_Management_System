@@ -11,6 +11,7 @@ A web-based Library Book Management System built using Python, Flask, and MySQL.
 * Issue books to students and record returns.
 * View registered members and their borrowing information.
 * Track overdue books and applicable fines.
+* View analytics charts: borrowing trends, most borrowed books, availability and student dues.
 
 ### Student
 
@@ -24,6 +25,7 @@ A web-based Library Book Management System built using Python, Flask, and MySQL.
 
 * **Frontend:** HTML, CSS, JavaScript
 * **Backend:** Python, Flask
+* **Data Analysis:** NumPy, Pandas, Matplotlib
 * **Database:** MySQL
 * **Database Connector:** MySQL Connector/Python
 * **Environment Configuration:** Python dotenv
@@ -33,6 +35,7 @@ A web-based Library Book Management System built using Python, Flask, and MySQL.
 ```text
 Library_Book_Management_System/
 ├── app.py
+├── analytics.py
 ├── schema.sql
 ├── requirements.txt
 ├── README.md
@@ -49,6 +52,7 @@ Library_Book_Management_System/
     ├── add_book.html
     ├── issue_return.html
     ├── members.html
+    ├── analytics.html
     └── _navigation.html
 ```
 
@@ -126,6 +130,19 @@ Open your browser and visit:
 ```text
 http://127.0.0.1:5000
 ```
+
+## Analytics
+
+Librarians can open the **Analytics** page from the menu (`/analytics`). `analytics.py` reads the `books`, `borrowers` and `loans` tables, uses Pandas and NumPy to calculate loan status, days late and fines, and draws the charts with Matplotlib:
+
+* Monthly borrowing trend (books issued and returned).
+* Top 10 most borrowed books.
+* Borrowing by category and by department.
+* Availability by category (copies on the shelf and copies issued).
+* Pending dues by student.
+* Loan status overview (returned, issued, overdue).
+
+Fines use the `FINE_PER_DAY` value from the `.env` file, the same as the Members page.
 
 ## Database Tables
 
